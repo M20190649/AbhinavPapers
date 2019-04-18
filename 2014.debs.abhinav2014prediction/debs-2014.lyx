@@ -1,0 +1,446 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass IEEEtran
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+DEBS 2014 Grand Challenge
+\end_layout
+
+\begin_layout Author
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+Abhinav Sunderrajan 
+\backslash
+
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+TUM CREATE Ltd.
+ 
+\backslash
+
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Singapore 637459 
+\backslash
+
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Email: abhinav.sunderrajan@tum-create.edu.sg
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Abstract
+The DEBS 2014 grand challenge provides an opportunity to design, develop
+ and benchmark stream-processing platforms for performance by performing
+ real-time analytics over high velocity event data-streams.
+ Further the high velocity data-stream needs to be enhanced with historic
+ data from a massive archive for real-time prediction while ensuring minimal
+ query processing latencies.
+ In this paper we present a solution which satisfies the stringent requirements
+ imposed by the challenge while detailing the various optimizations performed
+ to implement the same.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:INTRODUCTION"
+
+\end_inset
+
+ INTRODUCTION
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:QUERIES"
+
+\end_inset
+
+ QUERIES
+\end_layout
+
+\begin_layout Subsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Query-1"
+
+\end_inset
+
+ Query 1
+\end_layout
+
+\begin_layout Subsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Query-2"
+
+\end_inset
+
+ Query 2
+\end_layout
+
+\begin_layout Section
+OPTIMIZATIONS
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:ARCHITECTURE"
+
+\end_inset
+
+ ARCHITECTURE
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\align left
+\begin_inset Graphics
+	filename high-level.pdf
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:High-level-architechture-of"
+
+\end_inset
+
+ High-level architechture of data-stream processing platform
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This section describes the architecture of our data-stream processing platform
+ which is implemented in Java.
+ Figure shows the high-level overview of the same.
+ 
+\end_layout
+
+\begin_layout Standard
+Apart from the data-stream processing platform the two other components
+ shown are the live-data streamer, the archive data-streamer and the data
+ stream visualizer.
+ The live data streaming application is responsible for parsing and streaming
+ comma separated value (CSV) formatted files.
+ The live data streamer serves to mimic the smart plug network described
+ in the challenge.
+ The application converts the parsed records to Java objects, each representing
+ a unique temporal event.
+ The events or objects are then streamed over the network to the stream-processi
+ng platform listening to events on a port.
+ The speed at which events can be sent over the network is configured before
+ streaming.
+ The archive data streamer is responsible for streaming archive data in
+ appropriately sized chunks to the stream-processing platform at regular
+ intervals.
+ Noted that the archive stream(s) is necessary for Query 1 (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Query-1"
+
+\end_inset
+
+) alone.
+\end_layout
+
+\begin_layout Standard
+The data stream processing platform has been built using STORM as the core
+ framework.
+ STORM 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "key-1"
+
+\end_inset
+
+ is a horizontally scalable open-source data stream processing engine which
+ enables a developer to neatly package the stream-processing logic to processing
+ units called bolts which are then deployed over slave nodes in a cluster
+ for processing.
+ STORM also defines an abstraction called the spout which is the source
+ of input data-streams.
+ A STORM topology represents a network of spouts and bolts distributed over
+ the cluster with each bolt subscribing to the output of a spout or a preceding
+ bolt.
+ STORM's inherent parallelism with pre-configured number of worker processes
+ (each with its own JVM and scheduled executors for running one or more
+ tasks belonging to the same bolt or spout) deployed across the cluster
+ enables processing data-streams at very high velocities at low latencies.
+ 
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:EVALUATION"
+
+\end_inset
+
+ EVALUATION
+\end_layout
+
+\begin_layout Standard
+This section details the evlautions performed 
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:CONCLUSION"
+
+\end_inset
+
+ CONCLUSION
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-1"
+
+\end_inset
+
+ STORM.
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://storm.incubator.apache.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "2"
+key "key-2"
+
+\end_inset
+
+ Esper.
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://esper.codehaus.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "3"
+key "key-3"
+
+\end_inset
+
+ Redis.
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://redis.io/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "4"
+key "key-4"
+
+\end_inset
+
+ LMAX disruptor.
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://lmax-exchange.github.io/disruptor/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "5"
+key "key-5"
+
+\end_inset
+
+ Travel Time Estimation Using Niagara ST and latte Tufte, K., Li, J., Maier
+ D., Papadimos, Bertini, R., Rucker, J.
+ In 
+\shape italic
+Proceedings of SIGMOD (2007).
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "6"
+key "key-6"
+
+\end_inset
+
+ Exploiting Punctuation Semantics in Continuous Data Streams Tucker P., Maier
+ D., Sheard T., Fegaras L.
+ In 
+\shape italic
+Proceedings IEEE Transactions on Knowledge and Data Engineering (2003).
+\end_layout
+
+\end_body
+\end_document

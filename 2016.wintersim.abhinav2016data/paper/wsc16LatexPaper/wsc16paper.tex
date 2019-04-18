@@ -1,0 +1,440 @@
+%**************************************************************************
+%*
+%*  Paper: ``INSTRUCTIONS FOR AUTHORS OF LATEX DOCUMENTS''
+%*
+%*  Publication: 2016 Winter Simulation Conference Author Kit
+%*
+%*  Filename: wsc16paper.tex
+%*
+%*  Date: January 31, 2001   Time:  9:45 PM
+%*      BASE of current version: Feb 01, 2010 (primary WSC'10 LaTeX file)
+%*
+%*  Word Processing System: TeXnicCenter and MiKTeX
+%*
+%*
+%*  All files need the following
+\input{wsc16style.tex}     % download from author kit.  Style files for wsc formatting. Don't remove this line - required for generating the final paper!
+
+\documentclass{wscpaperproc}
+\usepackage{latexsym}
+%\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{mathptmx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{pgfplots}
+\usetikzlibrary{patterns}
+\usepackage{tikz}
+\usepackage{multirow}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsthm}
+\usepackage{algorithm}
+\usepackage{gensymb}
+\usepackage[noend]{algpseudocode}
+\renewcommand{\algorithmicforall}{\textbf{for each}}
+
+
+
+%
+%****************************************************************************
+% AUTHOR: If you do not wish to use hyperlinks, then just comment
+% out the hyperref usepackage commands below.
+
+%% This version of the command is used if you use pdflatex. In this case you
+%% cannot use ps or eps files for graphics, but pdf, jpeg, png etc are fine.
+
+\usepackage[pdftex,colorlinks=true,urlcolor=blue,citecolor=black,anchorcolor=black,linkcolor=black]{hyperref}
+
+%% The next versions of the hyperref command are used if you adopt the
+%% outdated latex-dvips-ps2pdf route in generating your pdf file. In
+%% this case you can use ps or eps files for graphics, but not pdf, jpeg, png etc.
+%% However, the final pdf file should embed all fonts required which means that you have to use file
+%% formats which can embed fonts. Please note that the final PDF file will not be generated on your computer!
+%% If you are using WinEdt or PCTeX, then use the following. If you are using
+%% Y&Y TeX then replace "dvips" with "dvipsone"
+
+%%\usepackage[dvips,colorlinks=true,urlcolor=blue,citecolor=black,%
+%% anchorcolor=black,linkcolor=black]{hyperref}
+%****************************************************************************
+
+
+
+		
+
+
+
+%
+%****************************************************************************
+%*
+%* AUTHOR: YOUR CALL!  Document-specific macros can come here.
+%*
+%****************************************************************************
+
+% If you use theoremes
+\newtheoremstyle{wsc}% hnamei
+{3pt}% hSpace abovei
+{3pt}% hSpace belowi
+{}% hBody fonti
+{}% hIndent amounti1
+{\bf}% hTheorem head fontbf
+{}% hPunctuation after theorem headi
+{.5em}% hSpace after theorem headi2
+{}% hTheorem head spec (can be left empty, meaning `normal')i
+
+\theoremstyle{wsc}
+\newtheorem{theorem}{Theorem}
+\renewcommand{\thetheorem}{ \arabic{theorem}}
+\newtheorem{corollary}[theorem]{Corollary}
+\renewcommand{\thecorollary}{\arabic{corollary}}
+\newtheorem{definition}{Definition}
+\renewcommand{\thedefinition}{\arabic{definition}}
+
+
+%#########################################################
+%*
+%*  The Document.
+%*
+\begin{document}
+
+%***************************************************************************
+% AUTHOR: AUTHOR NAMES GO HERE
+% FORMAT AUTHORS NAMES Like: Author1, Author2 and Author3 (last names)
+%
+%		You need to change the author listing below!
+%               Please list ALL authors using last name only, separate by a comma except
+%               for the last author, separate with "and"
+%
+\WSCpagesetup{Sunderrajan, Viswanathan, Cai and Knoll}
+
+% AUTHOR: Enter the title, all letters in upper case
+\title{DATA DRIVEN ADAPTIVE TRAFFIC SIMULATION OF AN EXPRESSWAY}
+
+% AUTHOR: Enter the authors of the article, see end of the example document for further examples
+\author{Abhinav Sunderrajan\\ [12pt]
+TUM CREATE Ltd \\
+1 CREATE Way\\
+138602, SINGAPORE\\
+% Multiple authors are entered as follows.
+% You may also need to adjust the titlevbox size in the preamble - search for titlevboxsize
+\and
+Vaisagh Viswanathan\\[12pt]
+TUM CREATE Ltd \\
+1 CREATE Way\\
+138602, SINGAPORE\\
+\and
+Wentong Cai\\ [12pt]
+School of Computer Science \& Engineering\\
+Nanyang Technological University\\
+Nanyang Avenue 639798, SINGAPORE\\
+\and
+Alois Knoll\\ [12pt]
+Robotics and Embedded Systems Group \\
+Department of Informatics\\
+Technische Universit\"at M\"unchen\\
+Boltzmannstra{\ss}e 3\\
+D-85748 Garching bei M\"unchen, GERMANY
+}
+
+
+
+\maketitle
+
+\section*{ABSTRACT}
+Ubiquitous data from a variety of sources such as smart phones, vehicles equipped with GPS receivers and fixed sensors makes it an exciting time for the implementation of several {\it Advanced Traffic Information and Management Systems} (ATMS). Leveraging this data for current traffic state estimation along with short term predictions of traffic flow can have far reaching implications for the next generation of Intelligent Transportation Services (ITS). In this paper, we present our proof-of-concept of such a data driven traffic simulation for the short term prediction and control of traffic flow by simulating a real world expressway through dynamic ramp-metering.
+
+\section{INTRODUCTION}
+\label{sec:intro}
+
+
+A  {\it dynamic data driven adaptive simulation} (DDDAS) incorporates real-time data from the physical system to initialize or steer the simulation system. {\it Symbiotic Simulation}, introduced in~\shortcite{fujimotoeditors} is a special class of DDDAS involving a mutually beneficial relationship between the physical system and simulation systems. The physical system  provides continuous inputs to steer the simulation which in turn gives recommendations to the former.
+
+In this paper, we present a symbiotic traffic simulation platform which receives continuous inputs from the physical system, i.e., the road network to initialize predictive faster than real time simulations. Based on the results of the predictive simulations, a recommendation is sent back to control the road network for optimizing traffic flow. The physical system is emulated using a high-fidelity agent based microscopic traffic simulation incorporating acceleration and lane change models. The {\it prediction \& control system} which receives traffic state inputs from the physical system uses a macroscopic traffic flow model to employ a simulation based optimization strategy. The recommendations of this predictive \& control system are given back to the physical system (microscopic simulation) and evaluated for efficacy. Towards this end, the contributions of this paper are as follows
+
+\begin{itemize}
+\item Develop a framework for symbiotic traffic simulation with the physical system providing continuous inputs to the predictive \& control system while getting back recommendations to optimize traffic flow.
+\item Employ the predictive simulations for evaluating several control actions before sending the best recommendation to the physical system. The control action chosen for this proof of concept paper is {\it ramp-metering}.
+\item Evaluate the efficacy of the recommendations given by the predictive \& control system (in the physical system) on employing ramp-metering by simulating a real world expressway.
+\end{itemize}
+
+
+\section{RELATED WORK}
+
+ The challenges of incorporating real-time data streams to steer executing simulations have been discussed in~\cite{darema2004dynamic}. Dynamic data driven simulations have found applications in several domains. An emergency detection and response system by~\shortciteN{schoenharl2006wiper} has been developed by processing call data records in real-time for identifying anomalies and emergencies. Plans for further actions when emergencies are detected are determined by agent based simulations. \shortciteN{celik2013dddams} have employed multi-agent data driven simulations for reliable and efficient dispatching of electricity under distributed generation for smart grids. Simulation based short-term forecasting using real-time data streams has found applications in modeling and tracking wildfires by~\shortciteN{douglas2006dddas} and ocean state observation and forecasting by~\shortciteN{patrikalakis2004towards}. 
+ 
+ The motivation for a city-scale symbiotic traffic-simulation can be found in \shortcite{aydt2012symbiotic}. The paper discusses a scenario where hundreds of white-box and gray-box agents provide real-time measurements regarding their geo-location and speed (both white and gray-box agents) and origin-destination (white-box agents only). Considering the burgeoning potential for the availability of traffic data from floating cars and other fixed sensors, it is evident that this real-time data will be beneficial for various ITS based services such as {\it dynamic ramp-metering} which is discussed in this paper.
+ 
+ Considering the inherent uncertainty in traffic systems, we employ ~{\it Symbiotic Adaptive Multisimulation} (SAMS) as a symbiotic simulation technique~\cite{mitchell2008symbiotic} for traffic flow optimization. SAMS involves using an ensemble of predictive models for an accurate representation of the physical system due to the absence of single authoritarian model. SAMS in the context of this paper, leverages a metaheuristic based optimization strategy to evolve the predictive models in response to changes in the physical system. This feature helps determine the appropriate control action for optimizing the physical system.  
+
+\section{SYMBIOTIC TRAFFIC SIMULATION FRAMEWORK}
+In this section, we describe the symbiotic traffic simulation framework by giving an overview of the physical and the predictive \& control systems.
+
+\subsection{Overview}
+\label{sec:sts}
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.42]{images/methodology.pdf}
+
+    \caption{Symbiotic traffic simulation system.}
+    \label{fig:sts-platform}
+  \end{figure}
+
+For a reasonable representation of the physical world, we employ an agent-based microscopic traffic simulation. The agent-based simulations were employed owing to the enormous amount of resources required to implement the recommendations of the predictive simulation on a real world road network. The {\it floating car data} (FCD) provided by the microscopic simulation was used to initialize the state of the predictive {\it Cell Transmission Model} (CTM)~\cite{daganzo1994cell} based macroscopic simulation.  Figure~\ref{fig:sts-platform} illustrates the symbiotic relationship between the physical and the prediction \& control system. 
+
+The predictive component works hand in hand with the optimization module to give  recommendations to the physical system to optimize traffic flow after evaluating several candidate solutions. In this paper we optimize the traffic flow of a real world expressway (Section~\ref{subsec:pie}) by employing ramp-metering as the control action. The near optimal ramp-metering strategy is determined by the optimization module through {\it simulated annealing} (Section~\ref{sec:case-study}).
+
+The primary reason for employing a macroscopic simulation for the predictive component, is computational efficiency. A gradient-based optimization strategy involves assessing the fitness of several candidate solutions in parallel. The fitness of a solution is given at the end of a stochastic predictive traffic simulation over a predetermined time horizon.  The above argument motivates us to go in for a cell based macroscopic model despite the relative lack of accuracy in comparison to the microscopic models. The execution time of a CTM based algorithm is proportional to the number of cells simulated thus making it an ideal model for a prediction \& control system.
+
+A microscopic traffic model involves simulating hundreds of thousands of agents and updating their speeds and positions every time-step. Further, modeling lane changes involves acquiring locks (in the context of parallel programming) on multiple lanes making a large scale microscopic simulation computationally expensive (See~\cite{aydt2013multi}). In the subsequent sections we show that our calibrated first-order traffic simulation can model the evolution of traffic state with minimal error (in comparison to the high fidelity microscopic models) provided it is well calibrated and initialized with a reasonably good estimate of the current traffic state in the physical system. 
+
+\subsection{Physical System}
+
+The agent based traffic simulation representing the physical system is based on the {\it SEMSim} platform~\shortcite{zehe2015semsim,aydt2013multi}. SEMSim is a high fidelity agent-based microscopic simulation. It uses the {\it Intelligent Driver Model} (IDM)~\shortcite{treiber2010open} and {\it MOBIL}~\shortcite{kesting2015general} as the acceleration and lane change models respectively. IDM is an accident free model which ensures that a vehicle attains the desired velocity at free flow and maintains the safe bumper to bumper distance to the leading vehicle. It also ensures that the acceleration is an increasing function of the speed and distance to the leading vehicle and a decreasing function of its speed. MOBIL, the lane change model ensures that the resultant accelerations and decelerations for a vehicle and its followers in the old and new lanes does not exceed a safe threshold. A lane change is done only if a vehicle gains speed without violating the safety and inconvenience (to the old and new followers) criteria.
+
+
+The simulation takes as input a road network detailing the lanes constituting the roads to be simulated. Road segments that don't have a preceding road segment are considered {\it sources} and those without a subsequent segment are {\it sinks}. The traffic thus flows from the sources to the sinks. The route taken by each agent is determined  based on turn ratios (ranging between $0.0$ and $1.0$) specified at each off-ramp expressway intersection. Parameters such as average vehicle length, the acceleration and deceleration terms of IDM are modeled as distributions to take into account heterogeneous driving behaviors and vehicle classes respectively. Note that SEMSim and the term physical system shall be used interchangeably over the rest of this paper.
+
+
+\subsection{Prediction System Model}
+\label{subsec:pred-system-model}
+
+The predictive, faster than real time macroscopic simulation is based on the stochastic variant of the Cell transmission model~\shortcite{boel2006compositional} and METANET~\shortcite{kotsialos2002traffic}. The cell network, $\mathbb{C}$ is comprised of $n$ cells. At each time instant, $t=k.T_{ctm}$, $k=0,1, .... K$ (where $K$ is the time horizon) the state of all cells are updated. The discrete event time step is denoted by $T_{ctm}$.
+  
+The state of a cell $c_i\in \mathbb{C}$ at each time step $k.T_{ctm}$ is determined by the concept of {\it sending} $S_i(k)$ and {\it receiving potentials} $R_i(k)$. $S_i(k)$ and $R_i(k)$ represent the number of vehicles cell $c_i$ can send and receive at time-step $k$. The mean and standard deviation of speed for a cell $c_i$ are denoted by $v_i(k)$ and $v_i^{sd}(k)$ respectively.  The number of vehicles in a cell $c_i$ at time-step $k$ is given by $N_{i}(k)$. While $N_i^{max}(k)$ represents the maximum number of vehicles that can be accommodated in cell $c_i$ given an average speed of $v_i(k)$. $N_i^{max}(k)$ is given by
+\begin{equation}
+\label{eq:nmax}
+N_i^{max}(k)=\frac{l_i.\lambda_i}{T_{gap}.v_{i}(k)+ L_{eff}}
+\end{equation}
+where $L_{eff}$, the {\it effective} vehicle length represents the sum of mean vehicle length and minimum gap. $T_{gap}$ represents the safe time gap.
+The length of cell $c_i$ is denoted by $l_i$ which is a variable and subject to the constraint $l_i \le V_0^i\times T_{ctm}$. $V_0^i$ is the constant free-flow speed for the cell. This constraint ensures that no vehicle can enter and exit a cell within one time-step. The number of lanes in cell $c_i$ corresponding to the associated road-link is denoted by $\lambda_i$. Other constants in this predictive simulation are the terms $\kappa, \delta$ and $\phi$. The constants $\kappa$ and $\delta$ adapt the speed of the vehicles after an on-ramp expressway merge while last term $\phi$ adapts the speed of cell where a lane drop occurs. $V^{out}_{min}$ denotes the minimum speed of cell a when it is completely congested. $V^{out}_{min}$ thus models the fact that some vehicles exit a bottleneck with a minimum speed. Finally $A_{m}$ is a parameter of the fundamental diagram representing the speed density relationship (See~\shortcite{kotsialos2002traffic}). Refer to~\shortciteN{sunderrajan2016techreport} for greater details on the algorithm and equations governing the model of the predictive simulation.
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.5]{images/cellNetwork.pdf}
+
+    \caption{An illustrative cell network.}
+    \label{fig:cell-network}
+\end{figure}
+  
+The cells constituting the cell network $\mathbb{C}$ are classified into five different types as shown in Figure~\ref{fig:cell-network}. Note that this is an illustrative network and not the real world expressway (see Section~\ref{subsec:pie}) simulated for the experiments. The {\it Merging} cells are associated with the parameter {\it merge priority} $\mu\in [0.0,1.0]$ which controls the proportion of vehicles that moves to the next cell in a given time-step. Correspondingly $\mu^{on}_{ramp}$ and $\mu_{exp}$ are the merge priorities of the on-ramp and expressway cells respectively. The {\it Source} and {\it Sink} cells are not physically related to any of the road links. The source and sink cells are effectively {\it ghost cells}, the former injects agents into the simulation while the agents exit the simulation through the latter. A {\it Diverging} cell is associated with the turn ratios $\tau$ ranging between $0.0$ and $1.0$ representing the proportion of vehicles exiting the expressway through off ramp and those continuing to traverse along the expressway. Cells $C_3$ and $C_9$ are considered {\it predecessors} of cell $C_4$ while cells $C_{10}$ and $C_7$ are considered {\it successors} of cell $C_6$.
+
+ \subsection{Optimization Module}
+ \label{subsec:sim-anneal}
+ 
+ \begin{algorithm}[!htbp]
+ \caption{Simulated Annealing using predictive system for computing the fitness function.}
+ \label{algo:ramp-metering}
+ {\bf Input: }
+ \begin{itemize}
+ \item $t \leftarrow$ temperature.
+ \item $maxiter$ Maximum number of iterations.
+ \item $S \leftarrow$ the initial candidate solution.
+ \item $K$ the simulation time horizon for determining the total number of vehicles $N_{total}$.
+ \end{itemize}
+ {\bf Result: }$Best$ the best solution over $maxiter$.
+ \begin{algorithmic}[1]
+ 
+ 
+ \State $Best\leftarrow S$
+ \State $iter\leftarrow 0$
+
+ \Repeat
+ \State $R\leftarrow Mutate(Copy(S))$
+ \State $r\leftarrow$ random number chosen from 0 to 1
+ 
+ \If{$fitness(R)<fitness(S)$ {\it or} $r<exp(\frac{fitness(S)-fitness(R)}{t})$} 
+  
+ \State $S\leftarrow R$
+ \EndIf
+ \State Decrease $t$
+ 
+ \If{$fitness(S)<fitness(Best)$}
+ \State $Best\leftarrow S$
+ \EndIf
+ \State $iter\leftarrow iter+1$
+ 
+ \Until{$iter<maxiter$}
+ \State \Return $Best$
+ \end{algorithmic}
+ \end{algorithm}
+ 
+We implemented a {\it simulated annealing}~\cite{weise2009global} approach (Algorithm~\ref{algo:ramp-metering}) for the optimization module to determine the best control strategy for the case study described in Section~\ref{sec:case-study}.
+The simulated annealing algorithm seeks to identify the best control-action by minimizing the value returned by the function $fitness(S)$ ($S$ represents the candidate solution) running the CTM based predictive simulation over a time horizon $K$. Specifically, the fitness function returns the value $N_{total}$ (Equation~\ref{eq:minimize}) which is the total number of vehicles in the system over $K$~\shortcite{papageorgiou2003review}.
+\begin{equation}
+\label{eq:minimize}
+N_{total}=T.\sum\limits_{\substack{k=0}}^{k=K}N(k)
+\end{equation}
+The algorithm explores different candidate solutions over $maxiter$ iterations by tweaking the current candidate solution through the Gaussian mutation operator $Mutate(S)$. The  operator probabilistically adds a random Gaussian noise of zero mean and standard deviation of $1.0$ to each element of the vector $S$ while ensuring the constraints (if any) are not violated. The best solution $Best$, is returned the end of all iterations. 
+
+Simulated annealing is a variant of the hill climbing algorithm where the original candidate solution $S$ is replaced with the mutated child $R$ if $fitness(R)<fitness(S)$. $S$ is replaced with $R$ (even if $R$ is a worse solution) with a probability  $p(t,R,S)=exp(\frac{fitness(S)-fitness(R)}{t})$ where $t>0$. The tunable temperature parameter $t$ is initially set to a high value ensuring that the algorithm is explorative (resembling a random walk in the space) at the beginning. It eventually becomes more exploitative by doing a hill-climbing as $t$ is decremented. Note that $p(t,R,S)$ is higher if the fitness difference $R$ and $S$ is small and vice versa. 
+
+\section{CASE STUDY}
+\label{sec:case-study}
+\subsection{Ramp-Metering}
+\label{subsec:ramp-metering}
+Ramp-metering is a traffic control mechanism implemented in several cities across the world to reduce the congestion on expressways~\cite{bogenberger1999advanced}. Ramp meters are traffic signals placed at the intersection of on-ramps and expressways. Ramp meters regulate the flow of vehicles along the ramps so as to minimize the turbulence caused due to merging vehicles disrupting the mainline flow. Care must be taken to ensure that the queue of the vehicles waiting along the on-ramps does not spill into the preceding urban street network. 
+
+Ramp-metering strategies are classified into two types, {\it fixed-time} and {\it reactive}~\shortcite{papageorgiou2003review}. The fixed time strategy is based on historical data pertaining to flow rates along the on-ramps and the expressway at different times of the day. The main drawback of the fixed time strategy is that their settings are based on historic rather than real time data. It does not take into account the varying nature of traffic demand and the occurrence of events such as accidents and road blocks which could cause massive congestions. 
+
+Reactive ramp-metering strategies aim to optimize the flow of traffic based on real-time measurements. Reactive ramp-metering is classified into two types {\it Local Ramp-Metering} and {\it Multivariable Regulator Strategies}~\shortcite{papageorgiou2003review}.  The former makes use of measurements in the vicinity of an on-ramp to regulate the flow on the ramp. The control strategy applied for an on-ramp is independent of the measurements and controls applied in other on-ramps in the vicinity. While the latter makes use of the system wide measurements to simultaneously regulate traffic flow along all on-ramps. A review on several implemented and proposed ramp-metering strategies can be found in~\cite{bogenberger1999advanced}.
+
+In this paper we employ simulated annealing described in Section~\ref{subsec:sim-anneal} to develop a system wide ramp-metering strategy of a real world expressway by regulating the flow on all on-ramps simultaneously. The system-wide ramp controller designed for this paper determines the maximum allowable {\it queue-threshold} $q^{th}_r$ (Equation~\ref{eq:constraint}) for a ramp $r\in \mathbb{R}^{on}_{ramps}$ before turning the phase of the signal to green from red. Where $\mathbb{R}^{on}_{ramps}$ is the set of controllable on-ramps in the system.
+\begin{equation}
+ \label{eq:constraint}
+\frac{N_r(k)}{N^{max}_r(k)}\le q^{th}_r
+ \end{equation}
+ Where $N_r(k)$ and $N^{max}_r(k)$ is the number and the maximum number of vehicles on the on-ramp $r$ at time step $k$. $N^{max}_r(k)$ at time-step $k$ is determined from Equation~\ref{eq:nmax}. Concretely the task is to find the ideal value of $q^{th}_r$ for all on-ramps so as to minimize $N_{total}$. Note that $q^{th}_r \in [0.0,1.0]$.
+ 
+ \subsection{The Simulated Physical Environment}
+ \label{subsec:pie}
+ 
+ The physical system for this paper is a $13$ km stretch of P.I.E (Pan Island Expressway) in central Singapore (including all on and off ramps) along with the agents simulated using SEMSim.  The details of the probability distributions and other parameters governing IDM and MOBIL for all agents in SEMSim are discussed in~\shortciteN{sunderrajan2016traffic}. The on-ramps and the first P.I.E link are sources, while all off ramps and the last link on P.I.E are sinks. Vehicles are generated at each source as a Poisson process with $\epsilon_{s}$ representing the mean number of vehicles generated at each source link $s$. The turn ratios for all off-ramps are kept constant at $0.25$. This implies that $25\%$ of all vehicles exit at a given off ramp while the remaining $75\%$ of the vehicles continue to travel on the main expressway. The number of lanes in the simulated stretch of the expressway varies between $3$ and $6$. All of the $11$ on-ramps present in the simulated stretch of P.I.E are assumed to be controllable and regulate the flow of vehicles into the expressway. Refer~\shortciteN{sunderrajan2016traffic} for more details on the locations of all on/off ramps along the simulated stretch of P.I.E.
+
+ \subsection{Traffic Scenario}
+ \begin{table}[!htbp]
+ \caption{Mean inter-arrival times at all source links/cells}
+ \begin{tabular}[b]{ccc}\hline
+       {\bf DISTANCE} (m) & {\bf RAMP TYPE} & {\bf $\epsilon_s$} (sec)\\ \hline
+      0.0 & First P.I.E link & 1.0\\
+      583.98 & On-Ramp & 2.0\\ 
+      2489.87 & On-Ramp & 3.6\\ 
+      4071.9 & On-Ramp & 3.6\\ 
+      5531.18 & On-Ramp & 3.6\\ 
+      5965.29 & On-Ramp & 3.6\\ \hline
+      \end{tabular}
+      \quad
+      \begin{tabular}[b]{ccc}\hline
+        {\bf DISTANCE} (m) & {\bf RAMP TYPE}& {\bf $\epsilon_s$} (sec) \\ \hline
+      7025.15 & On-Ramp & 2.0\\ 
+      7658.4 & On-Ramp & 2.0\\ 
+      8554.28 & On-Ramp & 3.6\\ 
+      9591.84 & On-Ramp & 3.6\\ 
+      11286.2 & On-Ramp & 3.6\\ 
+      11637.04 & On-Ramp & 3.6\\ \hline
+     \end{tabular}
+       \label{table:iat}
+ \end{table}
+ 
+  The traffic state of the expressway at the end of a time horizon is determined by the inter-arrival time $\epsilon_s$ for all source links and cells. The stretch of the expressway simulated consisting of $11$ on-ramps and along with the first expressway link has $12$ source links/cells. Table~\ref{table:iat} lists the mean inter-arrival times for all source links/cells. Notice that the flow of vehicles into the expressway along all on-ramps  are significantly less (1000 vehicles/hour) except for the ones at $583$ m, $7025$ m and $7658$ m. The system thus needs to find an optimal ramp metering strategy which balances the flow along all on-ramps so as to minimize the surge of vehicles along the three ramps with relatively higher inflow of vehicles.
+ 
+
+\section{RESULTS}
+\label{sec:experiments}
+
+
+
+\subsection{Calibration of Predictive Simulation}
+
+To ensure that the state predicted by the macroscopic simulation accurately represents the state of the physical system, the model parameters have to be calibrated. We need to identify (and tune) the parameters which will have significant impact in terms of bridging the difference in the state of the physical system and that of the predictive simulation at the end of a given time horizon.
+
+Towards this end we simulated SEMSim representing the physical system over a time horizon $K=2000$ seconds. The mean inter-arrival times of all source links $\epsilon_s$ were kept constant during the time period of the simulation. There are no vehicles in the simulation at time-step $k=0$. $N_i^{semsim}(K)$ denotes the number of vehicles in each cell of the mainline expressway (corresponding to the cell-network associated with the predictive system) is computed at the end of the microscopic agent-based simulation. 
+
+The initial state and the mean inter-arrival times of vehicles for all source cells $\epsilon_{s}$ are same as that of SEMSim for the predictive simulation. The turn ratios at the off-ramp ($\tau_{ramp}^{off}$) and expressway ($\tau_{exp}$) intersections are also the same as that of the physical system. The time-step $T_{ctm}$ for the predictive simulation is kept constant at $4.0$ seconds. To identify and then tune the parameters which bridge the difference between the predictive simulation and the physical system, we attempt to minimize the least square error given by $\sqrt{\sum\limits_{i=1}^{i=n_{exp}}(N_i^{semsim}(K)-N_i^{ctm}(K))^2}$.
+Where $N_i^{ctm}(K)$ denotes the number of vehicles in each cell of the mainline expressway computed at the end of the predictive simulation time horizon $K$. The least square error thus represents the difference between the number of vehicles for all expressway cells (numbering $n_{exp}$) at $K$. We ran the predictive simulation $1600$ times to the return the least square error for each of these runs to generate $1600$ data points. The parameters of the CTM based predictive simulation were varied based on the range column of the Table~\ref{table:pred-sim-var}.
+
+
+\begin{table}[!htbp]
+\centering
+\caption{The predictive simulation parameters}
+\label{table:pred-sim-var}
+\begin{tabular}{cclc}\hline
+\textbf{\begin{tabular}[c]{@{}c@{}}Simulation \\ parameter\end{tabular}} & \textbf{Description}                                                                     & \multicolumn{1}{c}{\textbf{Range}} & \textbf{\begin{tabular}[c]{@{}c@{}}Calibrated\\ Value\end{tabular}} \\
+\hline \\
+$\mu_{ramp}$                                                             & \begin{tabular}[c]{@{}c@{}}Merge priority for on ramp \\ merging cells\end{tabular}      & $[0,1, 0.6]$                       & 0.22                                                                \\
+$\mu_{exp}$                                                              & \begin{tabular}[c]{@{}c@{}}Merge priority for express way \\ merging cells.\end{tabular} & $[0.8, 0.1]$                       & 0.95                                                                \\
+$T_{gap}$                                                                & Safe time gap for vehicles (s)                                                           & \multicolumn{1}{c}{$[1.2, 1.5]$}   & $1.25$                                                              \\
+$V^{out}_{min}$                                                          & Minimum speed in a cell (m/s)                                                            & $[2.0, 6.0]$                       & 2.5 m/s                                                             \\
+$\delta$                                                                 & On ramp merge term                                                                       & $[0.02, 0.6]$                      & 0.27                                                                \\
+$A_{m}$                                                                  & Model term of fundamental diagram                                                        & \multicolumn{1}{c}{$[1.0, 4.0]$}   & $2.34$                                                              \\
+$\phi$                                                                   & Lane drop term                                                                           & $[1.8, 3.6]$                       & 2.7  \\
+$\kappa$                                                                   & On ramp merge term                                                                           & $[0.1, 2.0]$                       & 0.45  \\ \hline                                                              
+\end{tabular}
+\end{table}
+
+ 
+
+The polynomial regression  with an $R^2$ Statistic (a measure of model fit indicating the percentage of variance explained by the model) of $0.817$ is shown in Equation~\ref{eq:regression}. This model clearly shows that the two dominant terms are $T_{gap}$ and $\mu^{on}_{ramp}$. Based on the results of the calibration, the CTM based predictive simulation was initialized with the parameters shown in Table~\ref{table:pred-sim-var}.  The values of $A_m, \phi, \kappa$ and $\delta$ are chosen based on the calibration experiments by ~\shortciteN{kotsialos2002traffic}. Note that $V_{min}^{out}$ is set to $0.0$ for the on-ramps since the vehicles come to a complete standstill when the signal is red.
+
+\begin{equation}
+\label{eq:regression}
+LSE=\beta_0-\beta_1.\mu^{on}_{ramp}+\beta_2.T_{gap}+\beta_3.T_{gap}^2+\beta_4.T_{gap}.\mu^{on}_{ramp}
+\end{equation}
+
+\subsection{Efficacy of Ramp Metering}
+\label{subsec:results}
+
+In this section, we quantify the efficacy of using ramp-metering in the physical system (SEMSim) based on the recommendations given by the predictive \& control system. As discussed in Section~\ref{subsec:ramp-metering}, we need to find the optimal value of $q^{th}_r \in (0.0,0.8)$ for each of the $11$ on-ramps for the environment simulated. Note that the maximum value of the queue-threshold $q^{th}_{max}$ is set to $0.8$. The controller sets the phase to green when $q^{th}_r$ exceeds $q^{th}_{max}$ serving as the first constraint. The other constraints are
+\begin{enumerate}
+\item The minimum phase time for both the red and green phases are $12$ seconds.
+\item The signal at an on-ramp can be continuously red only for a maximum of $120$ seconds. After a $120$ second red phase, there is a mandatory green phase for $24$ seconds.
+\end{enumerate}
+The first of the above constraints ensures the phases of traffic lights do not change rapidly. This gives adequate reaction times for drivers to slow down and accelerate at an intersection. The second constraint ensures that none of the vehicles wait at an on-ramp for an inordinately long time thus preventing the starvation of an on-ramp $r$ even if the $q^{th}_r$ is not exceeded.
+
+The fitness function $fitness(S)$ from Algorithm~\ref{algo:ramp-metering} has been modified to compute the mean of the total number of vehicles $N_{total}$ for a ramp-metering configuration $S$ over a time horizon of $K=1800$ seconds using the CTM based predictive simulation (See Equation~\ref{eq:fitness}). 
+\begin{equation}
+\label{eq:fitness}
+N_{total}= \frac{1}{5}\sum\limits_{\substack{i=1}}^{5}N^{i}_{total} + \alpha.\sum\limits_{\substack{r\in\mathbb{R}}}q^{th}_{r}
+\end{equation}
+Note that the mean value of $N_{total}$ is computed by averaging over $5$ different runs of CTM for a single queue-threshold configuration to account for model stochasticity. Note that the term {\it run of the predictive simulation} refers to the execution of the simulation over the time horizon $K$. The {\it penalty factor} $\alpha$  penalizes the imposition of queuing control at an on ramp $r$. $\alpha$ prevents the algorithm from increasing the $q^{th}_r$ for minimal (and usually erroneous) benefits in  optimizing traffic flow. The penalty factor $\alpha$ thus reduces the variance in the results obtained for the queue-threshold configuration. It is set to $400.0$ after running and evaluating several {\it trials} of the simulated annealing algorithm. Note that term {\it trial} refers to the simulated annealing algorithm running over $maxiter$ iterations.
+
+The best ramp-meter configuration (determined using the predictive simulation) is now given as a recommendation to SEMSim which returns the corresponding $N_{total}$ over the same time horizon of $1800$ seconds. Note that the constraints pertaining to phase timings are implemented in SEMSim as well. In the next section, we determine the percentage improvement (in terms of $N_{total}$) over the no ramp metering case when the recommendation of the predictive system is fed back to the physical system.
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[clip=true,trim=1.5cm 4.0cm 1.7cm 4.0cm,scale=0.32]{images/CTM-improvement.pdf}
+   \caption{Decrease in $N_{total}$ predictive simulated annealing algorithm.}
+   \label{fig:ctm-improvement}
+  \end{figure}
+  
+Figure~\ref{fig:ctm-improvement} plots $N_{total}$ (for the best queue-threshold configuration obtained thus far) as a function of iteration count for five different trials of the simulated annealing algorithm running the CTM based predictive simulation. It can be seen that the improvement in $N_{total}$ converges by $40$ iterations in all the trials.
+
+A data driven adaptive simulation and prediction framework for traffic systems should work under reasonable time constraints for predicting short term evolution of state and giving back recommendations to optimize traffic flow. The simulations employed by the predictive system should thus be reasonably fast. The computational time for the CTM based simulation (used for determining $N_{total}$) over a time horizon of $1800$ seconds is around $75$ milliseconds. The CTM simulation was coded in Java SE 7 and measured in a 2.5 GHz Intel i5 system running on Windows 7. The entire run of the simulated annealing algorithm over $100$ iterations took around $42$ seconds to complete, thus satisfying the soft real time constraints for a symbiotic traffic simulation. The prediction \& control system can give a recommendation much earlier (at the end of $40$ iterations) to the physical system before searching for and further fine tuning the ramp control strategy in the background.
+  
+  \begin{figure}[!htbp]
+      \centering
+      \includegraphics[clip=true,trim=1.5cm 4.0cm 1.7cm 4.0cm,scale=0.32]{images/SEMSim-improvement.pdf}
+              \caption{Percentage improvement in $N_{total}$ when recommendations are given to SEMSim. }
+      \label{fig:semsim-improvement}
+    \end{figure}
+
+ Figure~\ref{fig:semsim-improvement} shows the percentage improvement of $N_{total}$ over the no ramp-metering case (corresponding to the trials in Figure~\ref{fig:ctm-improvement}) when the recommendations of the prediction \& control system (in terms of the best solution obtained thus far) are fed back into SEMSim. Assuming that the optimization module was invoked at time $T$ and its execution over $iter$ iterations takes $\Delta T$ seconds, the recommendations should be given to SEMSim at $T+\Delta T$ and evaluated until $T+K-\Delta T$ to return $N_{total}$. For our experiments, we ignored $\Delta T$ since it is small ($42$ seconds) and we do not expect the traffic conditions to change drastically over $\Delta T$ given the constant inter-arrival times at all source links/cells.  
+ 
+ Improvements in the  range of around $17\%$ and beyond is observed at the end of $40$ iterations in all of the five observed trials. To validate our approach further, we gave a bad recommendation to the physical system where $q^{th}_r$ was set to $q^{th}_{max}$ for all $r\in \mathbb{R}$. The erroneous recommendation resulted in $N_{total}$ (for the physical system) increasing by $43\%$ indicating worsening of traffic flow. The results in this section  illustrates the potential of symbiotic traffic simulation as an effective tool for traffic flow optimization through dynamic ramp-metering as a case study.
+
+
+
+\section{CONCLUSIONS AND FUTURE WORK}
+\label{sec:conclusion}
+In this work we have established that data driven predictive simulations can be beneficial towards optimizing traffic flow.  The prediction and optimization system should receive fairly accurate and continuous information on the current traffic state. This information is used for initialization, calibration and steering of the predictive simulations. Accurate current state estimation in turn increases the accuracy of the short term predictions (of evolution of traffic flow) thereby increasing the efficacy of the suggested control measures. Data from traditional fixed sensors can be augmented with FCD from smart phones and vehicle fleets such as taxis and public buses for enhanced traffic state reconstruction. The simulation model and optimization strategy used in the prediction \& control system can be varied depending upon accuracy, efficacy and computational time constraints.
+
+Symbiotic traffic simulations also offer exciting opportunities to implement and optimize several techniques for traffic flow optimization (other than ramp-metering discussed in this paper) such as adaptive speed limits and dynamic routing. Mobile applications and in car navigation systems provide a great means to disperse information to the traffic participants while the control system receives user anonymized data about vehicle speed, location and even origin-destination flows. This form of a symbiotic simulation based traffic prediction and optimization framework directed towards dispersing and receiving updates from individual drivers will be the focus of our future research.
+
+\section*{ACKNOWLEDGMENTS}
+This work was financially supported by the Singapore National Research Foundation under its Campus for Research Excellence And Technological Enterprise (CREATE) programme.
+\appendix
+
+
+% Please don't exchange the bibliographystyle style
+\bibliographystyle{wsc}
+% AUTHOR: Include your bib file here
+\bibliography{demobib}
+
+\section*{AUTHOR BIOGRAPHIES}
+
+\noindent {\bf ABHINAV SUNDERRAJAN} works as a Research associate for the "Modeling and Optimization of Architectures and Infrastructure" group at TUM CREATE. He obtained his Masters in Computing from NUS, Singapore in 2013. He is currently pursuing his PhD from the Informatics department in the Technische Universit\"at M\"unchen. His research interests lie in dynamic data driven applications, simulation based optimization and surrogate based modeling and optimization. His email address is \email{abhinav.sunderrajan@tum-create.edu.sg}.\\
+
+\noindent {\bf VAISAGH VISWANATHAN} obtained his B.Eng degree in Computer Engineering and completed his Ph.D. on "Modeling Behavior in Agent Based Simulations of Crowd Egress" from Nanyang Technological University, Singapore in 2010 and 2015 respectively. He is currently a Postdoctoral Research Fellow at TUM CREATE working on modeling and optimization of architectures and infrastructure. His current research investigates the infrastructure requirements and the environmental impact of large scale electro-mobility from a complex systems perspective. His research interests are primarily agent based modeling and simulation, complex adaptive systems and serious games. His email address is \email{vaisagh.viswanathan@tum-create.edu.sg}.\\
+
+\noindent {\bf WENTONG CAI} is a Professor in the School of Computer Engineering at Nanyang Technological University, Singapore. He is also the Director of the Parallel and Distributed Computing Center. His expertise is mainly in the areas of Modeling and Simulation (particularly, modeling and simulation of large-scale complex systems, and system support for distributed simulation and virtual environments) and Parallel and Distributed Computing (particularly, Cloud, Grid and Cluster computing). His web page is \hyperref{http://www.ntu.edu.sg/home/aswtcai/}{}{}{http://www.ntu.edu.sg/home/aswtcai/} and his email address is \email{aswtcai@ntu.edu.sg}.\\
+
+\noindent {\bf ALOIS KNOLL} received his diploma (MSc) degree in Electrical/Communications Engineering from the University of Stuttgart and his PhD degree in Computer Science from the Technical University of Berlin. He served on the faculty of the computer science department of TU Berlin until 1993, when he qualified for teaching computer science at a university (habilitation). He then joined the Technical Faculty of the University of Bielefeld, where he was a full professor and the director of the research group Technical Informatics until 2001. Between May 2001 and April 2004 he was a member of the board of directors of the Fraunhofer-Institute for Autonomous Intelligent Systems. At AIS he was head of the research group "Robotics Construction Kits", dedicated to research and development in the area of educational robotics. Since autumn 2001 he has been a professor of Computer Science at the Computer Science Department
+of the Technische Universit\"at M\"unchen. He is also on the board of directors of the Central Institute of Medical Technology at TUM (IMETUM-Garching); between April 2004 and March 2006 he was Executive Director of the Institute of Computer Science at TUM. His research interests include cognitive, medical
+and sensor-based robotics, multi-agent systems, data fusion, adaptive systems and multimedia information retrieval. His email address is \email{knoll@in.tum.de}.\\
+
+\end{document}
+

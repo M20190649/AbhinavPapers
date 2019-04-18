@@ -1,0 +1,564 @@
+\documentclass{sig-alternate-05-2015}
+\usepackage{epstopdf}
+\usepackage{booktabs}
+%\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{subfig}
+\usepackage{algorithm}
+\usepackage{varwidth}% http://ctan.org/pkg/varwidth
+\usepackage{gensymb}
+\usepackage[noend]{algpseudocode}
+\usepackage[export]{adjustbox}
+\graphicspath{{./images/}}
+
+\usepackage{acronym}
+\acrodef{ATMS}{Advanced Traffic Information and Management Systems}
+
+\begin{document}
+
+
+% Copyright
+\setcopyright{acmcopyright}
+
+
+
+% DOI
+\doi{10.475/123_4}
+
+% ISBN
+\isbn{123-4567-24-567/08/06}
+
+%Conference
+\conferenceinfo{PLDI '13}{June 16--19, 2013, Seattle, WA, USA}
+
+\acmPrice{\$15.00}
+
+%
+% --- Author Metadata here ---
+\conferenceinfo{WOODSTOCK}{'97 El Paso, Texas USA}
+%\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
+% --- End of Author Metadata ---
+
+\title{Deep Q-Learning for Ramp Metering}
+
+
+\numberofauthors{5} %  in this sample file, there are a *total*
+% of EIGHT authors. SIX appear on the 'first-page' (for formatting
+% reasons) and the remaining two appear in the \additionalauthors section.
+%
+\author{
+\alignauthor
+Abhinav Sunderrajan\\
+       \affaddr{TUM CREATE Ltd}\\
+       \affaddr{1 CREATE Way}\\
+       \affaddr{138602, SINGAPORE}\\
+       \email{abhinav.sunderrajan@tum-create.edu.sg}
+% 2nd. author
+\alignauthor
+David Eckhoff\\
+       \affaddr{TUM CREATE Ltd}\\
+       \affaddr{1 CREATE Way}\\
+       \affaddr{138602, SINGAPORE}\\
+        \email{david.eckhoff@tum-create.edu.sg}
+% 3rd. author
+\alignauthor
+Suraj Nair\\
+       \affaddr{TUM CREATE Ltd}\\
+       \affaddr{1 CREATE Way}\\
+       \affaddr{138602, SINGAPORE}\\
+       \email{suraj.nair@tum-create.edu.sg}
+\and  % use '\and' if you need 'another row' of author names
+% 4th. author
+   \alignauthor
+   Wentong Cai\\
+          \affaddr{School of Computer Engineering}\\
+          \affaddr{Nanyang Technological University}\\
+          \affaddr{Nanyang Avenue 639798, SINGAPORE}\\
+          \email{aswtcai@ntu.edu.sg}
+          \alignauthor Alois Knoll\\
+                 \affaddr{Robotics and Embedded Systems Group}\\
+                 \affaddr{Department of Informatics}\\
+                 \affaddr{Boltzmannstra{\ss}e 3}\\
+                  \affaddr{D-85748 Garching bei M\"unchen, GERMANY}\\
+                 \email{knoll@in.tum.de}
+}
+
+\maketitle
+\begin{abstract}
+Ramp metering, i.e., controlling the on ramps for expressways with traffic lights, is an effective measure to reduce the disruption of the mainline flow caused by merging vehicles.
+Finding a traffic light program that balances delays for vehicles on the ramps and on the expressway however is a challenging task.
+To this end, we explore the possibility of employing a Deep Reinforcement Learning (DRL) solution, namely \textit{Deep Q-Learning}, to control the traffic lights on the ramps.
+To the best of our knowledge, this is the first work to use neural networks for state space approximation in a reinforcement learning setting for traffic flow optimization.
+%We present a solution for ramp metering. Ramp meters are used to regulate the flow of vehicles along on ramps of a simulated expressway to reduce the overall delay experienced by all vehicles (including those on the on/off ramps and expressway) over a fixed time horizon. 
+Our simulation results show that our approach is not only effective in reducing the delay experienced by the vehicles but also that it achieves comparable results with a widely deployed ramp metering algorithm and that it can even outperform it in dynamic and high traffic volume scenarios.
+
+
+\end{abstract}
+
+
+
+
+
+%
+% End generated code
+%
+
+%
+%  Use this command to print the description
+%
+\printccsdesc
+
+% We no longer use \terms command
+%\terms{Theory}
+
+\keywords{Traffic flow optimization; Reinforcment learning; Deep Q-learning; Ramp Metering}
+
+\section{Introduction}
+\label{sec:intro}
+The problem of traffic flow optimization has been receiving enormous interest over the last decades given the rapid increase in the number of daily trips in mega-cities around the world and constraints in terms of building new infrastructure.
+The increased availability of several traffic related data-streams from various sources such as smart phones, vehicles and sensors further adds to the body of potential \ac{ATMS}.
+
+One challenge in this regard is the traffic flow optimization on expressways, in particular the merging traffic flows from on ramps entering the expressway.
+The goal is to control the flow of vehicles along the ramps to minimize the turbulence and disruption of the mainline flow. A common method to address this problem is {\it ramp metering}, that is, traffic light controlled on ramps. Some of the most widely deployed ramp metering strategies are ALINEA~\cite{papageorgiou1991alinea}, METALINE~\cite{papageorgiou1997alinea}, SWARM~\cite{paesani1997system} and HERO~\cite{papamichail2010heuristic}.
+Finding an optimal traffic light program in order to reduce waiting times for merging vehicles while at the same time minimizing the impact on expressway traffic, however, is a challenging task.
+
+To this end, we deploy machine learning techniques, in particular reinforcement learning (RL)  to find the optimal signal changes for the ramp traffic lights.
+One of these techniques is Q-learning, which was shown to be a promising approach to optimize traffic flows~\cite{abdulhai2003reinforcement}.
+However, the fact that Q-learning requires a finite set of states reduced its applicability to control dynamic traffic flows. 
+Recent advances and the introduction of \textit{Deep Q-Learning}, a variant of Q-Learning based on artificial neural networks (ANN)~\cite{mnih2013playing,mnih2015human}, could be a possible solution to this problem, making it an interesting candidate to be deployed for traffic flow optimization.
+
+In this article, we show how the problem of optimizing ramp metering can be tackled by applying deep Q-learning to train on ramp traffic lights.
+Our primary objective in this context is to reduce the overall delay experienced by vehicles on both the expressway as well as the on- and off-ramps.
+The contributions of this paper are:
+\begin{itemize}
+\item We propose an adaptive real-time ramp metering strategy using deep Q-learning.
+\item We show the applicability of our method by simulating a real-world expressway in the city of Singapore and quantify the benefit in terms of reduced delay.
+\item We evaluate and establish the ability of the algorithm to generalize and achieve good performance despite random flow rates along the roads and stochastic fluctuations in traffic flow. 
+\item We demonstrate the potentials of deep Q-learning for ramp metering by comparing with ALINEA which serves as benchmark.
+\end{itemize}
+
+The remainder of this article is organized as follows:
+We review literature on ramp metering and approaches towards using reinforcement learning for traffic flow control and optimization in Section \ref{sec:rel-work}.
+In Section \ref{sec:traffic-sim} we present the system model used for our approach, followed by an explanation of the deployed deep Q-learning approach (Section \ref{sec:deep-ql}).
+% . The traffic-state, actions and rewards for taking an action at a given state are discussed in Section~\ref{sec:deep-ql}. 
+Section ~\ref{sec:experiments} shows the results of our simulation study, before concluding the paper in Section~\ref{sec:conclusion}.
+%The experiments and an evaluation of the efficacy of DRL algorithm for ramp metering are discussed in Section~\ref{sec:experiments} before concluding the paper in Section~\ref{sec:conclusion}.
+
+\section{Related Work}
+\label{sec:rel-work}
+
+In this section we describe ramp metering as traffic flow control/optimization strategy before delving into RL based approaches for traffic flow optimization in general. Ramp metering strategies are classified into two types, {\it fixed-time} and {\it reactive}~\cite{papageorgiou2003review}. The fixed time strategy is based on historical data pertaining to flow rates along the on ramps and the expressway at different times of the day. The main drawback of the fixed time strategy is that their settings are based on historic rather than real-time data. It does not take into account the varying nature of traffic demand and the occurrence of events such as accidents and road blocks which could cause massive congestions. 
+  
+Reactive ramp metering strategies aim to optimize the flow of traffic based on real-time measurements. Reactive ramp metering is classified into two types: {\it Local Ramp Metering} (E.g. ALINEA) and {\it Multivariable Regulator Strategies} (E.g. METALINE)~\cite{papageorgiou2003review}. The former makes use of measurements in the vicinity of an on ramp to regulate the flow on the ramp. The control strategy applied for an on ramp is independent of the measurements and controls applied in other on ramps in the vicinity. While the latter makes use of the system wide measurements to simultaneously regulate traffic flow along all on ramps. A review on several recent ramp metering strategies can be found in~\cite{shaaban2016literature}.
+
+In this work we use ALINEA, a local ramp metering strategy as a benchmark for evaluating our approach. Field trials of ALINEA have shown it to be superior compared to other local ramp metering strategies and the no control case. Field trials comparing the performance of ALINEA and the more sophisticated METALINE (based on advanced control strategies such as linear-quadratic control)~\cite{papageorgiou1997alinea} show that the former is as good as the latter except in cases of events such as accidents due to more comprehensive measurements. The implementation of ALINEA is as follows
+
+\begin{equation}
+\label{eq:alinea}
+y^{\text{on}}_{\text{ramp}}(k)=y^{\text{on}}_{\text{ramp}}(k-1)+K_{R}(\rho_{\text{out}}^{\text{crit}}(k-1)-\rho_{\text{out}}(k-1))
+\end{equation}
+
+where $y^{\text{on}}_{\text{ramp}}(k)$ is the on ramp flow at time-step $k$, $\rho_{\text{out}}^{\text{crit}}(k-1)$ and $\rho_{\text{out}}(k-1)$ represents the critical and the current densities of the downstream cell. $K_{R}>0$ is the constant regulator parameter. ALINEA thus decreases the ramp flow (by adjusting the traffic light) when the density of the downstream cell is greater than its critical density.
+
+One of the first papers to employ reinforcement learning for controlling traffic is~\cite{abdulhai2003reinforcement}. The authors employ the classic Q-learning algorithm for traffic signal control of a single intersection. They employ a more sophisticated version of a {\it Q-table} (explained in Section~\ref{sec:deep-ql}) for storing and updating the Q-values for each state action pair. However, it does not scale for large traffic scenarios. 
+
+The authors of~\cite{prashanth2011reinforcement} solve the problem of high-dimensional state-action spaces using a linear function approximation technique. The authors use the variant of Q-learning  to reduce the queue lengths of vehicles waiting at an intersection  which also represents the state of the traffic network simulated. To reduce the number of states, the authors parameterize the vehicle queue lengths. For instance a queues with length less than $L1$ units are considered to be {\it low} while those queues with lengths in between thresholds $L1$ and $L2$ units are classified as {\it medium}. Queue lengths exceeding $L2$ units are classified as high. This work showed that RL with function-approximation is a better approach for traffic signal control in comparison to other strategies such as fixed timing and counting number of vehicles waiting at each lane for terms of reducing delay
+
+The authors of~\cite{balaji2010urban} implement a Q-learning approach to reduce traffic delay experienced in an urban street network by simulating peak hour traffic in the central business district of Singapore. The authors discretized the state space based on the data from vehicle queue and flow (at intersections) into $9$ possible states to construct a Q-table. The authors were able to achieve a near $12\%$ improvement in reducing traffic delay compared to existing benchmark solutions such as GLIDE~\cite{keong1993glide} (a modified version of SCATS used in Singapore).
+
+As mentioned previously we use an ANN with two hidden layers for state space generalization. The primary advantage of this approach is that we are no longer restricted to discretization of state space into a small number of states which may not capture the dynamics (traffic in general is a nonlinear stochastic system) of traffic flow adequately. To our knowledge this is the first work to use deep Q-learning for controlling the flow of vehicle along on ramps using ramp metering.
+
+
+     
+ \section{System Model}
+\label{sec:traffic-sim}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[scale=0.5]{images/cellNetwork.pdf}
+
+    \caption{An illustrative cell network.}
+    \label{fig:cell-network}
+\end{figure*}
+
+In this section we describe our macroscopic traffic flow simulation (we use the word simulation and emulator interchangeably). Description of the traffic emulator will set up the description of traffic state, action and the reward for the RL agent described in the next section.
+
+The traffic emulator in this work is a faster than real-time macroscopic simulation which is based on the stochastic variant of the Cell transmission model~\cite{boel2006compositional} and METANET~\cite{kotsialos2002traffic}. The cell network, $\mathbb{C}$ is comprised of $n$ cells. At each time-step, $k=0,1, .... K$ (where $K$ is the time horizon) the state of all cells are updated. The discrete event simulation time-step used for this emulator is a constant, $T=4$ seconds in all the experiments.
+  
+The state of a cell $c_i\in \mathbb{C}$ at each time-step $k$ is determined by the concept of {\it sending} $S_i(k)$ and {\it receiving potentials} $R_i(k)$. $S_i(k)$ and $R_i(k)$ represent the number of vehicles cell $c_i$ can send and receive at time-step $k$. The mean and standard deviation of speed for a cell $c_i$ are denoted by $v_i(k)$ and $v_i^{\text{sd}}(k)$ respectively.  The number of vehicles in a cell $c_i$ at time-step $k$ is given by $N_{i}(k)$. While $N_i^{\text{max}}(k)$ represents the maximum number of vehicles that can be accommodated in cell $c_i$ given an average speed of $v_i(k)$. $N_i^{\text{max}}(k)$ is given by
+\begin{equation}
+\label{eq:nmax}
+N_i^{\text{max}}(k)=\frac{l_i\cdot \lambda_i}{T_{\text{gap}}\cdot v_{i}(k)+ L_{\text{eff}}}
+\end{equation}
+where $L_{\text{eff}}$, the {\it effective} vehicle length represents the sum of mean vehicle length and minimum gap. $T_{\text{gap}}$ represents the safe time gap.
+The length of cell $c_i$ is denoted by $l_i$ which is a variable and subject to the constraint $l_i \ge V_0^i\times T$. Where $V_0^i$ is the constant free-flow speed for the cell. This constraint ensures that no vehicle can enter and exit a cell within one time-step. The number of lanes in cell $c_i$ corresponding to the associated road-link is denoted by $\lambda_i$.  Finally $y_i(k)$ represents the number of vehicles that exit a cell $c_i$ during the time interval $k$ through $k+1$, given the average speed in the cell during this time interval is $v_i(k)$.
+
+The cells constituting the cell network $\mathbb{C}$ are classified into five different types as shown in Figure~\ref{fig:cell-network}. Note that this is an illustrative network and not the real world expressway (see Section~\ref{subsec:pie}) simulated for the experiments. The {\it Merging} cells are associated with the parameter {\it merge priority} $\mu\in [0.0,1.0]$ which controls the proportion of vehicles that moves to the next cell in a given time-step. The {\it Source} and {\it Sink} cells are not physically related to any of the road links. The source and sink cells are effectively {\it ghost cells}, the former injects vehicles into the simulation while the vehicles exit the simulation through the latter. Note that the inter-arrival rates of vehicles at all source cells are kept constant during simulation time horizon of $K$ time-steps. A {\it Diverging} cell is associated with the turn ratios $\tau \in [0.0,1.0]$ representing the proportion of vehicles exiting the expressway through off ramp and those continuing to traverse along the expressway. Cells $C_3$ and $C_9$ are considered {\it predecessors} of cell $C_4$ while cells $C_{10}$ and $C_7$ are considered {\it successors} of cell $C_6$. The total number of cells  in the cell network for the expressway section simulated (including on-off ramps and excluding the source and link cells) is $212$.
+
+Refer to the technical report~\cite{sunderrajan2016symbiotic} for details on the algorithm and equations governing the model of this stochastic traffic simulation. Stochastic noise is added to the function decreasing the mean-flow speed of each cell which results in the creation of spontaneous {\it phantom jams}~\cite{helbing2001traffic} and shock waves as occurring in real life.
+
+   
+   
+  
+ 
+\section{Deep Q-learning for ramp metering}
+\label{sec:deep-ql}
+
+In this paper we use the variant of Q-learning called {\it Deep Q-learning} introduced in~\cite{mnih2013playing}. Q-learning~\cite{sutton1998reinforcement} is an RL algorithm which is known to converge to the optimal policy. Q-learning is characterized by a set of states $\mathbf{S}$ and actions $\mathbf{A}$.  Q-learning is a {\it model free} technique which learns the action-value (also known as $Q$) function represented by $Q^*(s,a)$ providing the expected utility of taking an action $a\in \mathbf{A}$ in given state $s \in \mathbf{S}$ of the environment and then following the optimal policy there afterwards. 
+ 
+ The basic implementation of Q-learning uses Q-tables to store the action-values. Each row represents the state $s \in \mathbf{S}$ while each column represents the actions $a \in \mathbf{A}$. This approach is not feasible for many real world control scenarios consisting of hundreds of millions of states. Consider the case of traffic where the state space is continuous and hence infinite. This problem is usually overcome by the use of {\it function approximators} for the action value function represented as $Q(s,a,\theta) \approx Q(s,a)$. The most common function approximators are linear in nature. For stochastic nonlinear systems such as traffic, a nonlinear function approximator such as neural network can be used. In case of the neural networks $\theta$ represents the weights of the underlying neurons.
+ 
+ For this work, we are inspired by the recent successes of Mnih et.al~\cite{mnih2013playing,mnih2015human} in effectively using neural (convolutional) networks (for nonlinear function approximation) for achieving human level control in playing video games. The ANN used in our work for generalizing the state space, enables the agent (the term agent refers to the controller/decision making entity in an RL setting) to take the appropriate control action at the on ramps in expressway section simulated. As pointed out in~\cite{mnih2013playing} the DRL algorithm uses a biologically inspired technique called {\it experience replay} for {\it off-policy} learning where the agent takes an action $a=max_{a}Q(s,a:\theta)$ with probability $1-\epsilon$ and a random action with probability $\epsilon$ ensuring adequate exploration of the state space.  
+ 
+
+In this section we describe the Markov decision process (MDP) for reducing traffic delay using ramp metering. The goal of the ramp metering controller (referred to as the deep reinforcement learning agent or DRL-agent henceforth) is to  minimize the net discounted delay experienced by all vehicles in all cells over a fixed time horizon of $K$ time-steps. The DRL-agent achieves this by learning a policy to determine the appropriate traffic light configuration for all controllable on ramps depending upon the state in the emulator. The emulator also provides rewards (discussed subsequently) which is used by the DRL-agent to determine the utility of an action taken.
+
+
+\subsection{Traffic State}
+The state of the emulator at time-step $k$ is defined in terms of state of each cell $c_i\in \mathbb{C}$ (except source and sink cells) given by $\frac{n_i(k)}{N_i^{\text{max}}(k)}$. This represents the ratio of the number of
+vehicles in $c_i$ to the maximum number of vehicles that can be accommodated in $c_i$ at time step $k$.
+
+\subsection{Reward Computation}
+ The total delay $D_{\text{total}}$ over $K$ time-steps is given by
+\begin{align}
+D_{\text{total}}=\sum\limits_{\substack{k=0}}^{k=K}\sum\limits_{c_i\in \mathbb{C}}d_i(k)
+\end{align}
+where $d_i(k)$ is the delay experienced by cell $c_{i} \in \mathbb{C}$ at time-step $k$. The delay $d_i(k)$ is given by
+\begin{align}
+\label{eqn:delay}
+d_i(k)=min\Big(0,y_i^{\text{free}}(k)-y_i(k)\Big)
+\end{align}
+
+Equation~\ref{eqn:delay} thus represents the number of vehicles affected due to congestion in the cell network in all cells $c_i\in \mathbb{C}$ at time-step $k$.
+
+
+The reward $r_{k+1}$ at the end of time-step $k$ is given by
+\begin{equation}
+r_{k+1}=\begin{cases}
+\frac{(D^{\text{noRM}}_{\text{total}}-D^{\text{RM}}_{\text{total}})\times \Omega}{D^{\text{noRM}}_{\text{total}}}, & \text{if } k=K \\
+0.0, & \text{otherwise}
+\end{cases}
+\end{equation}
+$D_{\text{total}}^{\text{noRM}}$ represents the total delay when no ramp metering is employed while $D_{\text{total}}^{\text{RM}}$ represents the total delay experienced over $K$ time-steps when ramp metering is employed using the policy determined by the ANN. The reinforcement learning agent thus tries to learn a ramp metering policy which tries to minimize the total delay experienced by all vehicles over a time horizon of $K$ time-steps in comparison to baseline policy of no ramp metering control. The constant $\Omega=10.0$ scales the reward at the end of terminal time-step $K$. We also ensure that reward at the end of an episode is clipped to be in range $-1.0\le r_{K+1}\le 1.0$ as suggested in~\cite{mnih2015human}.
+
+
+
+\subsection{Actions and Experimental Setup}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.385]{images/DQN-RM.pdf}
+
+    \caption{Deep Q-learning for ramp metering.}
+    \label{fig:dqn-rm}
+\end{figure}
+
+Figure~\ref{fig:dqn-rm} shows the set up for adaptive ramp metering control using deep Q-learning. In our experiments the minimum phase time for each ramp meter is $12$ seconds i.e. $3$ simulation time-steps. Given that each controllable on ramp  can either be red or green, the number of actions that can be taken at time $k$ is $2^\Psi$ where $\Psi$ denotes the number of controllable on ramps.
+\begin{algorithm}[!t]
+ \caption{Deep Q-learning for adaptive ramp metering control.}
+ \label{algo:ramp-metering}
+  \begin{algorithmic}[1]
+
+ \State Initialize replay memory $\mathbb{M}$ with size $N$.
+ \State Initialize the neural network (action-value function) $Q$ with weights $\Theta$.
+ \State Initialize the target action-value function (another neural network) $\bar{Q}$ with weights $\bar{\Theta}\leftarrow \Theta$.
+
+ \Repeat
+ 	\State Set random flow rates at all source cells.
+	\State  Warm up traffic emulator.
+	\For{$k=0, K$}
+		\State Get the state $s_k$ from the cell network in emulator.
+		 \If{$random_{\text{double}}<\epsilon$}
+		 	\State Select random action $a_t$ 
+		 \Else
+		 	\State Select action $a_k=argmax_{a}Q(s_k,a;\theta)$
+		 \EndIf
+		 \State \begin{varwidth}[t]{\linewidth}
+		 Observe the reward $r_{k+1}=d(k)$ for the action $a_k$
+		 
+		 \hskip\algorithmicindent and the new cell state $s_{k+1}$
+		   \end{varwidth}
+		 \State Create transition tuple $\mathbf{T}=(s_k, a_k,r_{k+1}, s_{k+1})$ 
+		 
+		  \If{$size(\mathbb{M})<N$}
+		 	\State Add $\mathbf{T}$ to memory $\mathbb{M}$
+		 \Else
+		 	\State replace first element in $\mathbb{M}$ with the tuple $\mathbf{T}$
+		 	\State Sample random mini-batch $\mathbb{B}$ from $\mathbb{M}$
+		 	\State For all $\mathbf{T} \in \mathbb{B}$
+	 		\State $y_j=\begin{cases}
+	 		r_j+\gamma\cdot max_{a}(\bar{Q}(s_{j+1},a';\bar{\Theta}))&\text{if }(j+1)<k\\
+	 			r_j, & \text{otherwise}
+	 		\end{cases}$
+	 		\State \begin{varwidth}[t]{\linewidth}
+	 		Use $(y_j-Q(s_j,a_j;\Theta))^2$ for gradient 
+	 		
+	 		\hskip\algorithmicindent descent with respect to $\Theta$.
+		  \end{varwidth}
+		 	\State After $C$ steps, reset $\bar{Q}\leftarrow Q$ 
+		 	
+		 \EndIf
+		 
+		
+	\EndFor 
+\Until{$epoch<epoch_{\text{max}}$}
+
+ \end{algorithmic}
+ \end{algorithm}
+
+After $k\cdot\tau$ simulation time-steps the traffic emulator gives the state of each of cell $c_i \in \mathbb{C}$ (excluding source and sink cells) as an input to the ANN.  As mentioned previously, traffic state at time-step $k$ is given by the ratio of number of vehicles to the maximum number of vehicles that an be accommodated in a cell (for the current traffic speed) for all cells belonging to the cell network $\mathbb{C}$. The state space is infinite since the $\frac{n_i(k)}{N_i^{\text{max}}(k)}$ ratios for all cells are real valued and continuous. The output layer of the ANN consist of $2^\Psi$ neurons where $\Psi=4$ in our case. The action $a$ is chosen from ANN output based on the $\epsilon$ greedy policy. The traffic light combination corresponding to the output of the ANN is given as an input to the stochastic emulator which computes the next state and the delay incurred in subsequent $k\cdot\tau$ time-steps. 
+
+Refer to Algorithm~\ref{algo:ramp-metering} implementing experience replay for training the DRL-agent for ramp metering control. To perform experience replay,  we store the agent's experience as a transition tuple  $\mathbf{T}=(s_t, a_t,r_{t+1}, s_{t+1})$ to the replay memory data store $\mathbb{M}$.  During the training process, random mini batches $\mathbb{B}$ of size $32$  are sampled  from  $\mathbb{M}$. Experience replay thus avoids the pitfall of learning from consecutive samples which are strongly correlated. As suggested in~\cite{mnih2015human}, two artificial neural networks are used to improve the stability of the learning process. The ANN $Q$ with weights $\Theta$ represents the the action-value function $Q$ while the ANN $\bar{Q}$ with weights $\bar{\Theta}$ generates the targets $y_i$. The weights of the ANN $\bar{Q}$ are replaced with those of $Q$ every $C=50$ steps.
+
+\begin{table*}[!htbp]
+	\centering
+	\caption{Hyper-parameters used for deep Q-learning}
+	\label{table:hyper-param}
+	\begin{tabular}{@{}lll@{}}
+		\toprule
+		\multicolumn{1}{c}{\textbf{Hyper Parameter}} & \multicolumn{1}{c}{\textbf{Value}} & \multicolumn{1}{c}{\textbf{Description}}                                                                                                                                                                                              \\ \midrule
+		number of hidden layers                      & 2                                  & \begin{tabular}[c]{@{}l@{}}The number of hidden layers in the neural network used for \\ Deep Q-learning. The first hidden layer consists of $200$ neurons\\ while the second hidden layer is composed of $150$ neurons.\end{tabular} \\
+		learning rate                                & 0.00025                            & Learning rate used by the RMSProp algorithm.                                                                                                                                                                                          \\
+		discount factor                              & 0.98                               & Discount factor used in Q-learning update.                                                                                                                                                                                            \\
+		replay memory size                           & 1500000                             & \begin{tabular}[c]{@{}l@{}}Stochastic gradient descent updates are sampled from this number \\ of recent $(s_t, a_t,r_{t+}, s_{t+1})$  tuples stored in memory.\end{tabular}                                                                      \\
+		mini batch size                              & 32                                 & \begin{tabular}[c]{@{}l@{}}The batch size used by the  stochastic gradient descent (SGD) \\ update of neural network weights.\end{tabular}                                                                                            \\
+		rms decay                                    & 0.95                               & Gradient momentum used by the RMSProp algorithm.                                                                                                                                                                                      \\
+		initial exploration                          & 1.0                                & The initial $\epsilon$ in the $\epsilon$ greedy evaluation.                                                                                                                                                                           \\
+		final exploration                            & 0.05                                & The final $\epsilon$ in the $\epsilon$ greedy evaluation.                                                                                                                                                                              \\
+		target network update frequency              & 100                                 & \begin{tabular}[c]{@{}l@{}}The frequency with which target network (in number of steps) is\\ evaluated.\end{tabular}                                                                                                                  \\ \bottomrule
+	\end{tabular}
+\end{table*}
+
+
+
+
+\section{Experiments}
+\label{sec:experiments}
+
+In this section we begin with a description of the hyper-parameters used for training the RL agent. Description of the experimental setup, the training process of the RL agent, evaluation of the RL agent's performance followed by a brief discussion of the results of evaluation.
+
+
+The details of the hyper-parameters used for training the RL agent (as described in Algorithm~\ref{algo:ramp-metering}) are shown in Table~\ref{table:hyper-param}. The ANN consists of two hidden layers with sizes equal to $200$ and $150$ neurons each. The size of the hidden layers were chosen based on the suggestion in~\cite{heaton2008introduction}, which states that the optimal size of the hidden layer is usually between the size of the input and size of the output layers. The size of the input layer is $212$ (equal to the number of physical cells). The output layer has $16$ neurons corresponding to the number of actions ($\Psi$ the number of controllable on ramps equals $4$) that can be taken. The hidden layers of the ANN employ {\it leaky rectified linear unit} (ReLU) as the activation function for each neuron. The output layer uses the {\it identity} activation function which is commonly used for regression problems. 
+
+
+
+
+
+\subsection{The Simulated Environment}
+\label{subsec:pie}
+\begin{center}
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[scale=0.28]{images/PIE.jpg}
+		\captionsetup{justification=centering}
+		\caption{Simulated section of P.I.E (Singapore) and location of all on/off ramps.}
+		\label{fig:pie-changi}
+	\end{figure}
+\end{center}
+
+For the experiments in this report, we simulate a $13$ km stretch of P.I.E. (Pan Island Expressway) in central Singapore (Figure~\ref{fig:pie-changi}) with all on and off ramps. The on ramps and the first P.I.E. link are sources, while all off ramps and the last link on P.I.E. are sinks. Refer to the Table~\ref{table:iat} for the location of all on/off ramps (or {\it static bottlenecks}) starting from the beginning of the first road-segment on P.I.E. The average distance between two bottlenecks is around $565\text{~m}$ along this stretch of P.I.E. The turn ratios for all off-ramps is kept constant at $\tau=0.25$. This implies that $25\%$ of all vehicles exit at a given off ramp while the remaining $75\%$ of the vehicles continue to travel on the main expressway. The number of lanes in the simulated stretch of the expressway varies between $3$ and $6$.
+
+ \subsection{Traffic Scenario}
+ 
+  \begin{table}[!htbp]
+    \centering
+    \caption{Mean flow rates at all on ramps}
+    \label{table:iat}
+    \begin{tabular}{@{}lll@{}}
+    \toprule
+    \multicolumn{1}{c}{\textbf{Distance (m)}} & \multicolumn{1}{c}{\textbf{Ramp type}}                          & \multicolumn{1}{c}{\textbf{\begin{tabular}[c]{@{}c@{}}Flow\\ (vehicles/hour)\end{tabular}}} \\ \midrule
+    0.0                                       & First P.I.E link                                                & 3600 - 4000                                                                                 \\
+    583.98                                    & On ramp                                                         & 1100-1600                                                                                   \\
+    2489.87                                   & On ramp                                                         & 1100-1600                                                                                   \\
+    4071.9                                    & \begin{tabular}[c]{@{}l@{}}Controllable \\ on ramp\end{tabular} & 800 - 1100                                                                                  \\
+    5531.18                                   & On ramp                                                         & 1100-1600                                                                                   \\
+    5965.29                                   & On ramp                                                         & 1100-1600                                                                                   \\
+    7025.15                                   & On ramp                                                         & 1100-1600                                                                                   \\
+    7658.4                                    & \begin{tabular}[c]{@{}l@{}}Controllable\\ on ramp\end{tabular}  & 800 - 1100                                                                                  \\
+    8554.28                                   & \begin{tabular}[c]{@{}l@{}}Controllable\\ on ramp\end{tabular}  & 800 - 1100                                                                                  \\
+    9591.84                                   & On ramp                                                         & 1100-1600                                                                                   \\
+    11286.2                                   & On ramp                                                         & 1100-1600                                                                                   \\
+    11286.2                                   & \begin{tabular}[c]{@{}l@{}}Controllable\\ on ramp\end{tabular}  & 800 - 1100                                                                                  \\ \bottomrule
+    \end{tabular}
+    \end{table}
+ Table~\ref{table:iat} lists the range of mean in-flow rates in vehicles/hour for all source links. The mean flow rates for an episode of the simulation is picked randomly within the specified range and kept constant during the simulated time horizon for all experiments in this paper. Notice that the flow of vehicles into the expressway along all controllable on ramps is less than that of the ones which do not have ramp meters.
+ 
+   \begin{figure}[!htbp]
+         \centering
+         \includegraphics[clip=true,trim=0.3cm 11cm 1cm 0.0cm,scale=0.35]{images/Ramps.pdf}
+     
+         \caption{Structure of on ramps in the traffic simulation.}
+         \label{fig:ramp-struc}
+     \end{figure}
+ 
+ Figure~\ref{fig:ramp-struc} illustrates the difference between a controllable on ramp and an ordinary one with no traffic light. Vehicles entering the P.I.E along an on ramp with no ramp meter cause lesser disruption to the main line flow compared to the on ramps with meters due to the presence of an extra lane.
+ 
+
+
+
+\subsection{Training}
+\label{subsec:training}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.35]{images/Qvalue.pdf}
+
+    \caption{Average action-value}
+    \label{fig:q-value}
+\end{figure}
+
+Figure~\ref{fig:q-value} plots the action-value function $Q$ which provides an estimate of how much discounted reward an agent can get by taking an action $a$ in a state $s$ and following the policy from there onwards. As suggested in~\cite{mnih2015human} we collect a fixed set of states  before training starts to track the average of the maximum predicted action-value for these states. A smooth increase in the $Q$-value which stabilizes after epoch $450$ provides the proof that deep Q-learning is able to train our ANN using stochastic gradient descent in a stable manner. For Figure~\ref{fig:q-value}, the average flow rates for all sources were randomly sampled in the ranges specified in Table~\ref{table:iat}. As previously stated, the mean inter-arrival times (and thus flow rates) for all source links/cells are kept constant for an episode of $K$ time-steps.
+
+%\pagebreak
+
+\subsection{Evaluation}
+\label{subsec:results}
+
+As explained in Section~\ref{sec:deep-ql}, the goal of our reinforcement learning algorithm is to determine a policy which tries to reduce the total delay $D_{total}$ (in comparison to the no control case) experienced by all vehicles over a time horizon of $K=1500$ seconds. At the end of the training over 500 epochs, we sampled random flow rates (for the source cells) within the ranges specified in Table~\ref{table:iat} and conducted $800$ trials to compare the delays experienced by the vehicles with and without ramp metering. The ramp metering policy is determined by the trained ANN which uses the traffic state as input to determine the appropriate traffic lights for the $4$ controllable on ramps. The ANN chooses the action corresponding to the maximum Q-Value for each state with a probability of $0.999$ and chooses a random action otherwise. This is done in order to avoid over fitting if any.
+
+
+ \begin{figure*}[!htbp]
+  
+\subfloat[For all cells including on and off ramps]{\includegraphics[width=.3\textwidth]{all-roads.pdf}\label{fig:all-roads-delay}}%
+\hfill%
+\subfloat[For the cells constituting expressway section only]{\includegraphics[width=.3\textwidth]{expressway.pdf}\label{fig:only-expressway}}%
+\hfill%
+\subfloat[For the cells constituting the on ramps only]{\includegraphics[width=.3\textwidth]{on-ramps.pdf}\label{fig:on-ramps}}%
+    \caption{Percentage of delay reduction for the two ramp metering strategies (R.M.S.) DRL and ALINEA }
+  \end{figure*} 
+  
+  
+  % Please add the following required packages to your document preamble:
+  % \usepackage{booktabs}
+  \begin{table}[!htbp]
+  \centering
+  \caption{Mean traffic density level}
+  \label{table:density-level}
+  \begin{tabular}{@{}ccc@{}}
+  \toprule
+  \textbf{\begin{tabular}[c]{@{}c@{}}Traffic density \\ level\end{tabular}} & \textbf{\begin{tabular}[c]{@{}c@{}}Density range\\ (veh/km/lane)\end{tabular}} & \textbf{Traffic State} \\ \midrule
+  1                                                                         & {[}30, 34{]}                                                                    & Synchronized flow      \\
+  2                                                                         & (34-38{]}                                                                      & Synchronized flow      \\
+  3                                                                         & (38-42{]}                                                                      & Synchronized flow      \\
+  4                                                                         & (42-46{]}                                                                      & Congested              \\ \bottomrule
+  \end{tabular}
+  \end{table}
+  
+As stated earlier, we implemented the local ramp metering strategy of ALINEA(Equation~\ref{eq:alinea}). We chose the constant regulator parameter $K_R=70.0$ based on~\cite{papageorgiou1997alinea}. Figure~\ref{fig:all-roads-delay} compares the percentage improvement in the overall delay (for all roads including the on/off ramps) for the ramp metering policy determined by the DRL-agent and that of ALINEA over the no ramp metering case for different mean traffic-density levels ranging from synchronized flow to congested (see Table~\ref{table:density-level}). The number of trials in each traffic density level numbers $200$ for ALINEA and DRL. Note that the simulation seeds were changed for each of the $800$ trials ($200$ in each traffic density category) to take into account the stochasticity associated with the traffic flow emulator. The overall median improvement for the DRL based ramp metering strategy is comparatively better than ALINEA.
+
+
+Figure~\ref{fig:only-expressway} compares the delay experienced over the mainline expressway cells only (for the same $800$ trials as above) between ALINEA and DRL. The results indicate that the median delay experienced over the expressway is lesser for ALINEA especially at higher traffic density levels of $3$ and $4$. The reason for the delay benefit over the expressway becomes apparent in Figure~\ref{fig:on-ramps} where  the median delay for the on ramps is worse for ALINEA (compared to DRL) for the traffic density level $3$ and $4$. We can tune the algorithm to favor the reduction of delay of the expressway cells  over those on the on/off ramps by weighting the expressway cell(s) delay by a factor $f>1.0$. This will come at the cost of increased delay along the on ramps potentially causing spillovers to the urban street network which we want to avoid.
+
+
+Figures~\ref{fig:density-delay} plots the variation of delay for all cells (measured over $16$ second time intervals) as the average traffic density (in veh/km/lane) is gradually increased from  levels $1$ through $4$ and beyond over $1800$ seconds for different ramp metering strategies. Note that the results of Figures~\ref{fig:density-delay} are averaged over $5$ different trials of the emulator with varying simulation seeds to account for the model stochasticity. The simulated scenario represents a typical rush hour  where the traffic state goes from synchronized flow to congested in a short period of time. The results indicate that DRL performs better than ALINEA for congested traffic states by adaptively changing the traffic lights at the ramps.
+
+\begin{figure}[!h]
+	\centering
+	\subfloat[Average traffic density in the rush hour scenario]{\includegraphics[width=.93\columnwidth]{density-delay2.pdf}}
+	\qquad
+	\subfloat[Delay experienced by all vehicles in the simulation]{\includegraphics[width=.93\columnwidth]{images/density-delay1.pdf}}
+	\caption{Overall delay for different ramp metering strategies as traffic density is gradually increased over $1800$ seconds}
+	\label{fig:density-delay}
+\end{figure}
+
+ 
+
+ \subsection{Discussion Of Results}
+\label{subsec:results-discussion}
+
+
+The evaluation of the results shows that deep Q-learning is able to learn a policy to minimize the overall and mainline expressway delays over a simulated time horizon of $K$ time-steps. The results also show that deep Q-learning has generalized well given random traffic flows at the sources and the inherent stochasticity in the emulator which causes spontaneous emergence of jams. Encouragingly the performance of DRL is comparable to ALINEA a widely deployed and successful ramp metering strategy for synchronized traffic flow conditions. Our simulations show that DRL performs better than ALINEA (delay reduction) when the traffic flow regime is congested.   
+
+The objective of this paper is to show that deep Q-learning can be used to determine model-free policies for ramp metering despite the inherent randomness in traffic systems. There are reasonable chances that the policy determined may not be optimal due to the lack of any theoretical guarantees since ANN is employed for function approximation. 
+
+
+ 
+
+\section{Conclusion and future work}
+\label{sec:conclusion}
+In this paper, we explored the possibility of applying deep Q-learning for ramp metering and showed that is has the potential for true adaptive real-time traffic control under uncertainty.
+
+%more detailed
+We simulated a real-word expressway in the city-state of Singapore using a cell based traffic flow model, which offer efficient and fast performance when used in computer simulations at a microscopic scale.
+This efficiency allwoed us to run the high number of iterations required for deep Q-learning to converge.
+We found that for different traffic densities, our approach is indeed feasible and produces similar results as the widely used local ramp metering strategy ALINEA.
+In fact, under dynamic traffic conditions, e.g., at the beginning of the rush hour, our approach outperformed ALINEA yielding a lower delay for all vehicles.
+
+This work has the potential to be extended for other optimal traffic control strategies in urban environments through adaptive traffic signal timings.
+Other control strategies that can be investigated for efficacy include variable speed limits, congestion aware routing and traffic signal timing optimization.
+Additionally, our approach can be altered using different reward functions, e.g., weighing delays on ramps or expressways differently.
+
+
+%ACKNOWLEDGMENTS are optional
+\section{Acknowledgements}
+This work was financially supported by the Singapore National Research Foundation under its Campus for Research Excellence And Technological Enterprise (CREATE) programme.
+
+\section{APPENDIX. TABLE OF SYMBOLS}
+\label{appendix:a}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+
+
+
+\begin{table}[!h]
+	\centering
+	\caption{List of symbols used in the paper.}
+	\label{my-label}
+	\resizebox{\columnwidth}{!}{%
+	\begin{tabular}{p{1.5cm}p{6cm}}
+		\toprule
+		\textbf{Symbol}                  & \textbf{Explanation}                                                                                                                                                                                                      \\ \midrule
+		$k$                              & Constant simulation (emulator) time step.                                                                                                                                                                                  \\
+		$K$                              & Simulation time horizon.                                                                                                                                                                                                   \\
+		$c_i$                            & A cell belonging to the cell network $\mathbb{C}$.                                                                                                                                                                         \\
+		$l_i$                            & Length of  $c_i$.                                                                                                                                                                                                      \\
+		$\lambda_i$                      & Number of lanes in  $c_i$.                                                                                                                                                                                             \\
+		$v_i(k)$                         & The average speed of vehicles in $c_i$ at  $k$.                                                                                                                                                              \\
+			$\rho_i(k)$                         & The vehicle density in $c_i$ at  $k$.                                                                                                                                                              \\
+		$n_i(k)$                         & Number of vehicles in $c_i$ at $k$.                                                                                                                                                                         \\
+		$N_i^{\text{max}}(k)$            & Maximum number of vehicles that can be accommodated in $c_i$ at $k$ given a velocity of $v_i(k)$.                                                              \\
+		$T_{\text{gap}}$                 & Constant time gap for all vehicles.                                                                                                                                                                        \\
+		$L_{\text{eff}}$                 & Constant effective vehicle length.                                                                                                                                                                                         \\
+		$V^0_i$                          & The free-flow velocity of $c_i$.                                                                                                                                                                                    \\
+		$y_i(k)$                         & The outflow in number of vehicles from $c_i$ during $k$, given the velocity is $v_i(k)$.                                                           \\
+		$y_i^{\text{free}}$              & The outflow from cell $c_i$ during $k$ given $v_i(k)=V^0_i$.                                                                                                                                                               \\
+		$d_i(k)$                         & Delay experienced in $c_i$ during $k$.                                                                                                                                                                                     \\
+		$D_{\text{total}}$               & Sum of total delay experienced by all cells over the entire time horizon.                                                                                                                                                  \\
+		$S_i(k)$                         & The sending potential of $c_i$ at $k$.                                                                                                                                                                    \\
+		$R_i(k)$                         & The receiving potential of $c_i$ at  $k$.                                                                                                                                                                  \\
+		$\mu$                            & Merge priorities of on ramps.                                                                                                                                                                                              \\
+		$\tau$                           & turn ratios for off ramp and expressway intersections.                                                                                                                                                                     \\
+		$y^{\text{on}}_{\text{ramp}}(k)$ & Flow from the on ramp on to the expressway.                                                                                                                                                                                \\
+		$K_R$                            & ALINEA constant regulator parameter.                                                                                                                                                                                       \\
+		$Q(s,a)$                         & Action value or Q function.                                                                                                                                                                                                \\
+		$s$                              & A state $s \in \mathbf{S}$ of the environment.                                                                                                                                                                             \\
+		$a$                              & A action $a \in \mathbf{A}$ the controller/ reinforcement learning  agent  can make.                                                                                        \\
+		$Q(s,a,\theta)$                  & A Q function using function approximator. $\theta$ represents the weights  of an ANN is used for sate space approximation. when an ANN is used for state space approximation. \\
+		$\Psi$                           & Number of controllable on ramps.                                                                                                                                                                     \\ \bottomrule
+	\end{tabular}}
+\end{table}
+
+%
+% The following two commands are all you need in the
+% initial runs of your .tex file to
+% produce the bibliography for the citations in your paper.
+\bibliographystyle{abbrv}
+\bibliography{deeprl}  % sigproc.bib is the name of the Bibliography in this case
+% You must have a proper ".bib" file
+%  and remember to run:
+% latex bibtex latex latex
+% to resolve all references
+%
+% ACM needs 'a single self-contained file'!
+%
+%APPENDICES are optional
+%\balancecolumns
+
+\end{document}
