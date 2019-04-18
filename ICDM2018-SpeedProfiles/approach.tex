@@ -1,0 +1,14 @@
+\section{Road speed profiles}
+\label{subsec:road-speed-profile}
+
+Road speed profiling refers to the process of computing the expected, median, upper-bound and lower-bound (within a confidence interval) speeds of road segments in a city at a given time of the day. 
+More precisely: $\mathbf{G(V,E)}$ represents the road network of a city modelled as a directed graph. Here, $V$ and $E$ represent the set of vertices (nodes) and edges respectively. Here, edges represent road segments and nodes represent intersections. Note that we will used the terms edge and road segments interchangeably. The edge weights represent a metric of interest, which is often either the length of the road segment or the time take it takes to travel through it, i.e. speed profile. 
+
+Given the set of road segments $E = \{e_i\}_{i=1}^{N}$, and time buckets indexed by $t =\{1,2,\ldots, T\}$, \ac{RSP} involves estimating the expected speed profile $\mu_{e_i,t}$, and its median $\bar{\mu}_{e_i,t}$, upper bound $\mu^{upper}_{e_i,t}$ and lower bound $\mu^{lower}_{e_i,t}$ for each edge $e_i$ and time interval $t$. The confidence intervals representing the upper and lower bound speeds represent the $68\%$ confidence intervals using the \emph{Gosset's t-distribution} with $n-1$ degrees of freedom. Here $n$ is the number of vehicles speed samples for edge $e_i$ in time interval $t$.
+
+
+Computation of \ac{RSP} initially involves reliably {\it map matching}~\cite{quddus2007current,sunderrajan2014map} driver trajectories on to a digital road network to extract the distribution of the speeds of the vehicles traversing a given road. We are using \ac{OSM} to construct our road network graphs for City~$1$ and City~$2$ each containing close to $71k$ and $118$k edges respectively. Given the large number of road segments we need to ensure that most of them are sufficiently traversed by taxis to ensure adequate spatio-temporal coverage.
+
+
+
+

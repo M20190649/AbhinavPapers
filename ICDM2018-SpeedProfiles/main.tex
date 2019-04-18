@@ -1,0 +1,254 @@
+\documentclass[conference]{IEEEtran}
+%\IEEEoverridecommandlockouts
+\usepackage{epstopdf}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{booktabs}
+%\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{subfig}
+\usepackage{algorithm}
+\usepackage{varwidth}% http://ctan.org/pkg/varwidth
+\usepackage{gensymb}
+\usepackage[noend]{algpseudocode}
+\usepackage[export]{adjustbox}
+\usepackage{todonotes}
+\usepackage{verbatim}
+\usepackage{multirow}
+\graphicspath{{./images/}}
+
+
+\usepackage{acronym}
+\acrodef{TTE}{Travel Time Estimation}
+\acrodef{RSP}{Road Speed Profiles}
+\acrodef{ATMS}{Advanced Traffic Information and Management Systems}
+\acrodef{OSM}{Open Street Map}
+\acrodef{CH}{Contraction Hierarchies}
+\acrodef{FCD}{Floating car data}
+\acrodef{ML}{Machine Learning}
+\acrodef{OD}{origin-destination}
+\acrodef{EMA}{Exponential Moving Average}
+\acrodef{CoV}{Coefficient of Variation}
+\acrodef{EDT}{estimated driven distance}
+\acrodef{MAPE}{Mean absolute percentage error}
+\acrodef{RMSE}{Root mean square error}
+\acrodef{POI}{Point of Interest}
+\begin{document}
+
+
+
+\title{Road Speed Profiling for Upfront Travel Time Estimation
+}
+%\begin{comment}
+\author{\IEEEauthorblockN{Abhinav Sunderrajan, Jagannadan Varadarajan, Kong Wei Lye}
+\IEEEauthorblockA{\textit{Data Science, GrabTaxi Holdings Pte. Ltd, SINGAPORE}\\
+\{abhinav.sunderrajan,jagan.varadarajan,kongwei.lye\}@grab.com}
+
+}
+%\end{comment}
+
+% The paper headers
+\markboth{Road speed profiling for upfront travel time estimation}%
+{Shell \MakeLowercase{\textit{et al.}}: Bare Demo of IEEEtran.cls for IEEE Journals}
+
+% make the title area
+\maketitle
+
+\begin{abstract}
+ Accurate travel time estimation is crucial for several service based industries such as ride hailing, food delivery, logistics etc. Promises made to the passengers in terms of cab allocation, waiting times and food delivery times need to be kept to avoid passenger churn given the number of competing start-ups in these sectors. Further, travel times impact the cost of the cab rides and delivery charges which are shown upfront to the passengers and drivers. Trip time estimations must thus be very accurate to avoid both passenger and driver disenchantment. In this paper we present a solution for accurate upfront \ac{TTE} based on \ac{RSP} and a corrective \ac{ML} model using data from around $\bf{9.5}$ million taxi trips in two (each) mega-cities in S.E Asia. 
+
+\end{abstract}
+
+
+% Note that keywords are not normally used for peer-review papers.
+\begin{IEEEkeywords}
+Road speed profiling, travel time estimation, machine learning
+\end{IEEEkeywords}
+
+
+\IEEEpeerreviewmaketitle
+
+\input{Intro.tex}
+\input{approach.tex}
+
+\section{Methodology of road speed profiling}
+\label{sec:road-speed-profiling-details}
+
+\begin{figure}[!tb]
+	\centering
+	\includegraphics[width=\columnwidth,left,height=7.5cm,keepaspectratio]{images/WorkFlowRSP.pdf}
+	
+	\caption{Work flow for road speed profiling.}
+	\label{fig:workflow-rsp}
+\end{figure}
+
+
+
+Figure~\ref{fig:workflow-rsp} presents our work-flow to compute \ac{RSP} by processing the massive driver trajectory data-set. The steps involved in RSP computation are:
+\begin{enumerate}
+    \item Identify if the driver is on a job (either pickup or drop off phase of a ride). We discount GPS probes when drivers are not on a job as they may not be representative. 
+    \item Map-matching driver trajectories, extract the vehicle speed distribution across road segments.
+    \item Identify time bucket using the time stamp and pre-calculated adaptive time buckets for weekdays and weekends.
+    \item Extract the distribution of road speeds for each road per time bucket.
+    \item Computation of \ac{EMA} of road speeds.
+\end{enumerate}
+
+
+\subsection{Map-matching driver trajectories}
+\label{subsec:snap-to-road}
+Map-matching or snapping driver trajectories to road segments is the process of integrating the noisy driver GPS data and the spatial road network data in order to identify the exact road segment or link in which the vehicle is traversing. Thanks to several years of research in this area, the performances of these algorithms have steadily improved due to advances in inference techniques and improvements in the quality spatial road network data. 
+
+We use the map-matching algorithm presented in~\cite{newson2009hidden} with two main improvisations: a) we also make use of the bearing (orientation of a moving vehicle to true north) information to improve accuracy. 2) use contextual information to identify the correct link when equi-probable paths (e.g., highway and road underneath) are encountered.  
+
+\subsection{Adaptive speed buckets}
+\label{subsec:adaptive-buckets}
+The time intervals into which we choose to bin the $1440$ minutes constituting a day plays an important role in inferring road speed distributions. 
+%
+Conventionally used time buckets, e.g., one hour or half an hour, which amounts to $24$ and $48$ time bins in a day tend to be less adaptive to the traffic flow in the city and the resulting variations. For example, a shorter time bucket such as 30 minutes can be adequate for peak-hour traffic flow, but may have sparse spatio-temporal coverage during AM and PM non-peak hours. Furthermore, it results in $48$ contracted graphs for a single day making the downstream routing algorithms such as \ac{CH}~\cite{geisberger2012exact,luxen-vetter-2011} non-scalable. 
+
+ 
+%(since the edge weights of the routing graphs will be travel times across them). This is a big number for production systems handling several millions of routing calls every second. 
+
+
+
+\begin{figure}[!tb]
+	\centering
+	\includegraphics[width=\columnwidth,left,height=6cm,keepaspectratio]{images/AdaptiveBinning.pdf}
+	
+	\caption{Adaptive time bucketing: Predicting the number of bookings at any time of the day with minute of the day being the only feature.}
+	\label{fig:adaptive-binning}
+\end{figure}
+ 
+Moreover, typically traffic flow in any city will have distinct peak hours, where the variance in traffic flow is high. The speeds of roads vary sharply with onset and offset of congestion. On the contrary, we  find the traffic conditions are fairly static during non-peak hours, e.g., between $01$:$00$ and $03$:$00$ hours barring exceptions such as accidents and road closures. 
+
+
+In order to address problems in manually choosing the time intervals, we propose to use a data-centric approach to partition a day into \emph{adaptive time buckets} for further \ac{RSP} computation. 
+To this end, we implemented a \emph{decision tree} based regression algorithm to partition the day based on travel patterns observed in the city.
+
+ 
+The \emph{decision tree} (DT) uses the time (in minutes of the day) as the only feature to predict the number of cab bookings (as this can proxy the travel pattern observed in the city). Note that we are interested in retrieving the splits of the DT which gives us the adaptive intervals for \ac{RSP} rather than predicting the number of cab rides as a function of the minute of the day. Intuitively, since peak hours tend to have large variations, the DT will create finer time splits and vice-versa in order to minimize its prediction error, enabling a dynamic partition of the day. 
+
+Since weekdays and holidays including weekends exhibit very distinct traffic patterns, we train two separate DTs using their respective data from $8$ million rides sampled over 3 months.  Figure~\ref{fig:adaptive-binning} shows the the number of bookings (in red) and the DT based predictions for every minute of the day on a typical weekday for City~$1$\footnote{The number of bookings on the y-axis has been omitted on purpose}. The line in green shows the predicted number of bookings for this weekday. 
+
+The predicted curve (in green) shows that the step function changes rapidly for  morning peak hours and more slowly during non-peak hours, clearly identifying the times of the day where the traffic conditions are fairly static. 
+
+
+\begin{figure}[!tb]
+	\centering
+	\includegraphics[width=\columnwidth,center,height=6cm,keepaspectratio]{images/COV.pdf}
+	
+	\caption{Adaptive vs fixed time buckets: Comparing the \ac{CoV} of adaptive and one hour time buckets during morning and evening peak hours for City~$1$.}
+	\label{fig:compare-binning}
+\end{figure}
+
+In Figure~\ref{fig:compare-binning} we show the probability densities of \ac{CoV}\footnote{Coefficient of Variation defines the variation as a proportion of the mean and is given by $\frac{\sigma}{\mu}$, where $\mu$ and $\sigma$ are the sample mean and standard deviation.} for $20$ major roads in City~$1$ during the morning and evening peak hours. We can clearly see that using adaptive speed buckets helps to reduce the variance and hence obtain a more reliable (tighter) road speed profile estimate.
+
+
+\subsection{Analysis of road speed distribution}
+In this section, we present our analysis of road speeds over time intervals corresponding to peak and non-peak hours accumulated using our adaptive time buckets.
+
+\label{subsec:speed-disribution}
+\begin{figure}[!tb]
+	\centering
+	\includegraphics[width=\columnwidth,left]{images/AyerRajah.pdf}
+	
+	\caption{Variance in road speeds for an expressway in City~$1$}
+	\label{fig:ayerajah-distribution}
+\end{figure}
+
+Figure~\ref{fig:ayerajah-distribution} shows the median speeds and the \ac{CoV}  for a few weekdays corresponding to the adaptive time bins for a $1.4$ km long road segment on an expressway in City~$1$. Figure~\ref{fig:ayerajah-distribution} clearly shows that the variance in traffic flow is much lower during non-peak hours compared to peak hours. The higher variance during peak hours can also be attributed to vehicles travelling in different lanes. For instance, vehicles exiting a congested off ramp from an expressway will slow down while vehicles on the remaining parallel lanes continue to move as usual.
+
+\begin{figure}[!tb]
+	\centering
+	\subfloat[]{\includegraphics[width=.45\textwidth,center,height=5cm,keepaspectratio]{images/AYE-Peak.pdf}\label{fig:bimodal-peak}}
+	\hfill%
+	\subfloat[]{\includegraphics[width=.45\textwidth,center,height=5cm,keepaspectratio]{images/AYE-NonPeak.pdf}\label{fig:unimodal-nonpeak}}%
+	\label{fig:speed-distributions}
+	\caption{Speed distribution analysis: Distribution of vehicle speeds during (a) peak hours and (b) non peak hours for an expressway, clearly showing that peak-hour traffic exhibit high variance requiring a bi-modal distribution to model.}
+\end{figure} 
+
+In Figures~\ref{fig:bimodal-peak} and~\ref{fig:unimodal-nonpeak} we show the probability densities of speeds for the same expressway segment used in Figure~\ref{fig:ayerajah-distribution} during the morning peak and a random non-peak time intervals. We can clearly see that the distribution of vehicles speeds during the peak hours is bi-modal accounting for the large \ac{CoV}. The distribution of vehicle speeds during the non-peak time interval is as expected a Gaussian with very low variance. The implication of the analysis of road speed distribution is that it is much harder to predict travel times during peak hours largely due to the fact that vehicles in different lanes travel at different speeds depending upon the route.
+
+
+
+Given this analysis on the vehicle speeds, we propose to compute the speed ranges for a road segment $e_i$ given by $\mu^{upper}_{e_i,t}$ and  $\mu^{lower}_{e_i,t}$ based on the Gosset's t-distribution with $68\%$ (two-tailed) confidence interval and $n-1$ degrees of freedom, when $\text{CoV}\le 0.3$. We assume that the vehicle speeds are IID (independent and identically distributed) normal. When the \ac{CoV} exceeds $0.3$ we assume that the distribution of the vehicle speeds is bimodal and use a Gaussian mixture model with two means   $\mu_{e_i,t}^{\text{d1}}$ and $\mu_{e_i,t}^{\text{d2}}$ which are used as proxies for the upper an lower bound speeds for the edge $e_i$ at time interval $t$. Note that the speed ranges are calculated for a road segment if there are at least a minimum $20$ driver location pings for a time interval. 
+
+
+
+\subsection{Incremental learning using exponential moving averages}
+\label{subsec:ema}
+As in any production system, we need to update our speed profile models based on new data. In order to make our model update incrementally and in an online fashion, we use an exponential moving average to compute and update the speed ranges per road segment. Note that the \ac{RSP} per time interval (per day type) is computed every day.
+From Figure~\ref{fig:ayerajah-distribution}, we can see that the median (along with mean and variance) speeds follow a recurring pattern on all weekdays. Although we observe a repetitive pattern on weekdays and weekends, it is important to keep the model updated as more are more cabs are added to our fleet and adapt to new changes such as addition of new roads and metro lines that change traffic conditions on the ground.
+%
+The \ac{EMA} based speed profiles helps us to continuously refine our \ac{RSP} estimates and  smooth out occurrences of anomalous speed values that could occur from time to time due to accidents, thunderstorms etc.
+
+
+
+The \ac{EMA} for \ac{RSP} consisting of mean, median, upper and lower bound speeds per time interval per day of week is calculated using the Equation~\ref{eqn:ema} where $K=\frac{2}{N+1} \text{and } N \text{ is the length of the EMA}$.
+\begin{equation}
+\label{eqn:ema}
+    \text{EMA}_\text{today}=\text{speed}_{\text{today}}\times K+\text{EMA}_\text{yesterday}\times(1-K)
+\end{equation}
+
+The length of \ac{EMA} window $N$ used for this study is $5$. The look-up table thus comprising \ac{EMA} of the \ac{RSP} is refreshed on a monthly basis.
+
+
+
+\section{Travel time estimation}
+\label{sec:travel-time-estimation}
+
+\begin{figure}[!tb]
+	\centering
+	\includegraphics[width=\columnwidth,,height=7.5cm,center,keepaspectratio]{images/XgBoostCorrectiveModel.pdf}
+	
+	\caption{Gradient boosted decision trees (GBDT) model for correcting initial TTE estimate from road speed profiles.}
+	\label{fig:xgboost-model}
+\end{figure}
+
+In this section we discuss how we leverage upon the \ac{RSP} and the corrective {\it GBDT}~\cite{schapire2003boosting} based regression model to compute the travel times. Given an \ac{OD} pair at a given time of the day and day of a week (weekday or weekend), we use the look-up table (created in the previous steps) to modify the weights of the road-network graph based on expected travel times across each edge of the \ac{OSM} road network graph. On computing the path between the ~\ac{OD} pair we get the expected, median, upper and lower bound travel times for the path from the look-up table. The values returned for \ac{TTE} from \ac{RSP} are the sum of the travel times across the edges constituting the path from the origin to destination.
+
+The travel time estimates returned from the speed profiles are reasonably accurate during the non-peak hours and not very accurate during the peak hours. We have discussed reasons for this earlier in Section~\ref{subsec:speed-disribution}. 
+
+The features that we use as inputs to the GBDT model to predict the final travel time \ac{OD} are  expected, median, lower bound and upper travel times (from \ac{RSP} look-up table and routing), day of the week and hour of the day. Note that separate GBDT models are trained for pickup and drop off phases per city. Figure~\ref{fig:xgboost-model} shows the work-flow for predicting the final travel time estimate given the output of \ac{RSP} as features to the corrective \ac{ML} model. 
+
+
+
+
+
+\input{Experiments.tex}
+
+\section{Conclusions}
+\label{sec:conclusion}
+
+In this work, we presented a model for travel time estimation that relies on modeling \ac{RSP} for individual road segments. Our analysis of vehicle speed distribution across different times of the day showed that vehicle speeds tend to have large variance during peak-hours compared to non-peak hours. In order to arrive at RSP with tight confidence intervals, we proposed decision tree based dynamic time buckets to accumulate speed observations. An exponential moving average is then used to incrementally update RSPs with incoming observations. Finally, in order to provide an accurate TTE, we adopted a hybrid approach, where a gradient boosted decision tree learning algorithm is trained on inputs including initial TTE from RSPs, along with time and day. Experimental evaluation done on taxi trip data coming from historical trips in two large cities of S.E Asia show that our initial TTE is a valuable feature that can be further refined or bias-corrected by the ML model. We observe this improvement consistently across both pickup and drop off phases of ride-hailing. To the best of our knowledge, our work is one of the first works to study the problem of large scale traffic state estimation and \ac{TTE} in S.E Asia using big data. 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+% Can use something like this to put references on a page
+% by themselves when using endfloat and the captionsoff option.
+\ifCLASSOPTIONcaptionsoff
+  \newpage
+\fi
+
+
+%\begin{thebibliography}{1}
+\bibliographystyle{IEEEtran}
+\bibliography{ICDMAbhinav2018} 
+
+
+\end{document}
+
+
